@@ -1,0 +1,48 @@
+.announcement-card {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    width: 100%;
+    border-left: 4px solid var(--color-primary);
+    transition: all 0.2s ease;
+}
+
+.announcement-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.announcement-date {
+    font-size: 13px;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.announcement-content {
+    font-size: 15px;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-sm);
+}
+
+.announcement-meta {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.announcement-author {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+@media (min-width: 768px) {
+    .announcement-card {
+        min-width: 320px;
+        padding: var(--spacing-lg);
+    }
+
+    .announcement-content {
+        font-size: 16px;
+    }
+}

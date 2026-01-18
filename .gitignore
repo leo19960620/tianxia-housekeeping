@@ -1,0 +1,28 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 環境變數
+.env
+.env.local
+.env.production.local
+
+# 資料庫備份
+backup_*.sql
+
+# 作業系統
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+logs/

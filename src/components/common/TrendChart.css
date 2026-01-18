@@ -1,0 +1,176 @@
+.trend-chart {
+    width: 100%;
+    position: relative;
+}
+
+.trend-chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--color-text-secondary);
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+}
+
+/* 長條圖樣式 */
+.trend-chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--gradient-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.bar-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.bar-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+}
+
+.bar {
+    width: 100%;
+    min-height: 4px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: all var(--transition-base);
+    animation: barGrow var(--transition-slow) ease-out;
+}
+
+@keyframes barGrow {
+    from {
+        height: 0;
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.bar:hover {
+    opacity: 0.8;
+    transform: scaleX(1.05);
+}
+
+.bar-primary {
+    background: var(--gradient-primary);
+}
+
+.bar-success {
+    background: var(--gradient-success);
+}
+
+.bar-warning {
+    background: var(--gradient-warning);
+}
+
+.bar-danger {
+    background: var(--gradient-danger);
+}
+
+.bar-info {
+    background: var(--gradient-info);
+}
+
+.bar-value {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+    white-space: nowrap;
+}
+
+.bar-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 折線圖樣式 */
+.trend-chart-svg {
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.trend-line {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: lineDraw 1s ease-out;
+}
+
+@keyframes lineDraw {
+    from {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+    }
+
+    to {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 0;
+    }
+}
+
+.trend-line-primary {
+    stroke: var(--color-primary);
+}
+
+.trend-line-success {
+    stroke: var(--color-success);
+}
+
+.trend-line-warning {
+    stroke: var(--color-warning);
+}
+
+.trend-line-danger {
+    stroke: var(--color-danger);
+}
+
+.trend-line-info {
+    stroke: var(--color-info);
+}
+
+.trend-chart-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--spacing-xs);
+    padding: 0 var(--spacing-sm);
+}
+
+.line-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* 響應式 */
+@media (max-width: 767px) {
+
+    .bar-label,
+    .line-label {
+        font-size: 10px;
+    }
+
+    .bar-value {
+        font-size: 10px;
+    }
+}

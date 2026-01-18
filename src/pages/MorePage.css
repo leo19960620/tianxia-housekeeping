@@ -1,0 +1,53 @@
+.more-page {
+    background: var(--color-background);
+    min-height: 100vh;
+}
+
+.more-content {
+    padding: var(--spacing-lg);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.menu-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border: 1px solid var(--color-border);
+}
+
+.menu-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.menu-card-color {
+    height: 4px;
+    width: 100%;
+}
+
+.menu-card-content {
+    padding: var(--spacing-lg);
+}
+
+.menu-card-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+}
+
+.menu-card-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}

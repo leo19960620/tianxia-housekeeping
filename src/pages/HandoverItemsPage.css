@@ -1,0 +1,105 @@
+.handover-items-page {
+    background: transparent;
+}
+
+.page-content {
+    padding: 0;
+}
+
+/* 表格容器 */
+.items-table-container {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-top: var(--spacing-lg);
+}
+
+/* 表格樣式 */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.items-table thead {
+    background: var(--color-background-secondary);
+}
+
+.items-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.items-table td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    vertical-align: top;
+}
+
+.items-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.items-table tbody tr:hover {
+    background: var(--color-background-secondary);
+}
+
+.items-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 欄位寬度控制 */
+.item-date-cell {
+    width: 15%;
+    white-space: nowrap;
+}
+
+.item-content-cell {
+    width: 65%;
+    line-height: 1.6;
+}
+
+.item-staff-cell {
+    width: 20%;
+}
+
+/* 空狀態 */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xxl);
+    color: var(--color-text-secondary);
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-lg);
+}
+
+/* 響應式 */
+@media (max-width: 767px) {
+    .items-table-container {
+        overflow-x: auto;
+    }
+
+    .items-table {
+        min-width: 600px;
+    }
+
+    .item-date-cell {
+        width: 20%;
+    }
+
+    .item-content-cell {
+        width: 55%;
+    }
+
+    .item-staff-cell {
+        width: 25%;
+    }
+}

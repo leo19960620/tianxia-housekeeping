@@ -1,0 +1,325 @@
+.icon {
+    display: inline-block;
+    position: relative;
+    color: currentColor;
+}
+
+/* 尺寸 */
+.icon-size-sm {
+    width: 14px;
+    height: 14px;
+}
+
+.icon-size-md {
+    width: 18px;
+    height: 18px;
+}
+
+.icon-size-lg {
+    width: 24px;
+    height: 24px;
+}
+
+/* 公告圖標 */
+.icon-announcement {
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 50% 50% 0 0;
+    position: relative;
+}
+
+.icon-announcement::before {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+    top: -6px;
+    left: 5px;
+}
+
+.icon-announcement::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 3px;
+    background: currentColor;
+    border-radius: 2px;
+    bottom: -5px;
+    left: -4px;
+}
+
+/* 日期圖標 */
+.icon-date {
+    width: 16px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+    position: relative;
+}
+
+.icon-date::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 2px;
+    background: currentColor;
+    top: 6px;
+    left: 1px;
+}
+
+.icon-date::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 4px;
+    border: 2px solid currentColor;
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+    top: -6px;
+    left: -3px;
+}
+
+/* 用戶圖標 */
+.icon-user {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    position: relative;
+}
+
+.icon-user::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 10px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    border-top: none;
+    bottom: -8px;
+    left: -5px;
+}
+
+/* 時間圖標 */
+.icon-clock {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    position: relative;
+}
+
+.icon-clock::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 2px;
+    background: currentColor;
+    top: 5px;
+    left: 5px;
+}
+
+.icon-clock::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 5px;
+    background: currentColor;
+    top: 2px;
+    left: 5px;
+}
+
+/* 箭頭下 */
+.icon-arrow-down {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid currentColor;
+}
+
+/* 箭頭上 */
+.icon-arrow-up {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid currentColor;
+}
+
+/* 臭氧/雲圖標 */
+.icon-cloud {
+    width: 18px;
+    height: 12px;
+    border-radius: 10px;
+    border: 2px solid currentColor;
+    position: relative;
+}
+
+.icon-cloud::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    top: -5px;
+    left: 3px;
+}
+
+/* 備品/箱子圖標 */
+.icon-box {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+    position: relative;
+}
+
+.icon-box::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    top: 4px;
+    left: -3px;
+}
+
+.icon-box::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 8px;
+    background: currentColor;
+    top: 4px;
+    left: 5px;
+}
+
+/* 警告圖標 */
+.icon-warning {
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 16px solid currentColor;
+    position: relative;
+}
+
+.icon-warning::before {
+    content: '!';
+    position: absolute;
+    color: var(--color-card);
+    font-size: 12px;
+    font-weight: 700;
+    top: 4px;
+    left: -3px;
+}
+
+/* 統計圖標 */
+.icon-chart {
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+
+.icon-chart::before,
+.icon-chart::after {
+    content: '';
+    position: absolute;
+    background: currentColor;
+    bottom: 0;
+}
+
+.icon-chart::before {
+    width: 4px;
+    height: 16px;
+    left: 0;
+}
+
+.icon-chart::after {
+    width: 4px;
+    height: 10px;
+    right: 0;
+}
+
+.icon-chart {
+    border-bottom: 2px solid currentColor;
+}
+
+/* 樓層圖標 */
+.icon-building {
+    width: 16px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+    position: relative;
+}
+
+.icon-building::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 2px;
+    background: currentColor;
+    top: 3px;
+    left: 3px;
+    box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
+}
+
+/* 時長圖標 */
+.icon-timer {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    position: relative;
+}
+
+.icon-timer::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 6px;
+    background: currentColor;
+    top: 2px;
+    left: 5px;
+}
+
+.icon-timer::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 2px;
+    background: currentColor;
+    top: 5px;
+    left: 5px;
+}
+
+/* 設定圖標 */
+.icon-settings {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    position: relative;
+    background:
+        linear-gradient(currentColor, currentColor) padding-box,
+        conic-gradient(from 0deg, currentColor 45deg, transparent 45deg 90deg, currentColor 90deg 135deg, transparent 135deg 180deg, currentColor 180deg 225deg, transparent 225deg 270deg, currentColor 270deg) border-box;
+    border: 2px solid currentColor;
+}
+
+.icon-settings::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: var(--color-card);
+    top: 3px;
+    left: 3px;
+}

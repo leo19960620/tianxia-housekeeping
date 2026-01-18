@@ -1,0 +1,66 @@
+.desktop-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-background);
+}
+
+.layout-main {
+    flex: 1;
+    margin-left: 260px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 70px;
+    /* 補償固定的 Topbar 高度 */
+}
+
+.layout-content {
+    flex: 1;
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* 防止橫向滾動 */
+    width: 100%;
+    max-width: 100%;
+}
+
+/* 頁面容器 */
+.desktop-page {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.desktop-page-header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.desktop-page-title {
+    display: none;
+    /* 標題已在 Topbar */
+}
+
+.desktop-page-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+/* 響應式 - 平板及以下 */
+@media (max-width: 1023px) {
+    .layout-main {
+        margin-left: 0;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .layout-content {
+        padding: var(--spacing-md);
+    }
+}

@@ -1,0 +1,43 @@
+.multi-user-picker-footer {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.multi-user-picker-footer button {
+    flex: 1;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-base);
+}
+
+.multi-user-picker-footer .cancel-btn {
+    background: var(--color-secondary);
+    color: var(--color-text);
+}
+
+.multi-user-picker-footer .cancel-btn:hover {
+    opacity: 0.9;
+}
+
+.multi-user-picker-footer .confirm-btn {
+    background: var(--color-primary);
+    color: white;
+}
+
+.multi-user-picker-footer .confirm-btn:hover {
+    background: var(--color-primary-dark);
+}
+
+.user-picker-item.multi-select {
+    background: transparent;
+}
+
+.user-picker-item.multi-select.selected {
+    background: rgba(46, 69, 58, 0.2);
+}

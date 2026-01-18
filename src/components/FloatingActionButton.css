@@ -1,0 +1,35 @@
+.fab {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+    z-index: 99;
+}
+
+.fab:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.05);
+    box-shadow: 0 12px 24px rgba(76, 175, 80, 0.3);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+@media (min-width: 768px) {
+    .fab {
+        width: 64px;
+        height: 64px;
+        right: 32px;
+        bottom: 100px;
+    }
+}

@@ -1,0 +1,63 @@
+.topbar {
+    height: 70px;
+    background: var(--color-background);
+    /* 與內容背景一致 */
+    /* border-bottom: 1px solid var(--color-divider);  移除下邊框以無縫銜接 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-xl);
+    gap: var(--spacing-xl);
+    position: fixed;
+    top: 0;
+    left: 260px;
+    /* 避開側邊欄 */
+    right: 0;
+    z-index: var(--z-header);
+    box-shadow: none;
+    /* 移除陰影 */
+    transition: left var(--transition-base);
+    /* 添加過渡效果，配合側邊欄切換 */
+}
+
+/* 響應式 - 平板及以下 */
+@media (max-width: 1023px) {
+    .topbar {
+        left: 0;
+    }
+}
+
+/* 左側 */
+.topbar-left {
+    flex: 0 0 auto;
+}
+
+.topbar-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    /* 深綠色文字 */
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.topbar-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+}
+
+.breadcrumb-item {
+    color: var(--color-text-tertiary);
+}
+
+.breadcrumb-current {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.breadcrumb-separator {
+    color: var(--color-text-muted);
+}
+
+/* 移除中間搜尋和右側通知相關 CSS */

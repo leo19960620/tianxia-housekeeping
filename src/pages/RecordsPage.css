@@ -1,0 +1,18 @@
+.records-page,
+.announcements-page,
+.handover-items-page,
+.settings-page {
+    padding: var(--spacing-md);
+    padding-bottom: 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.coming-soon {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-lg);
+}

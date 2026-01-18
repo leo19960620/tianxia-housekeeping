@@ -1,0 +1,417 @@
+.handover-detail-page {
+    background: var(--color-background);
+}
+
+.handover-detail-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* 兩欄佈局 */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+}
+
+.detail-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+/* 基本資訊卡片 - 左側邊框 + 柔和背景 */
+.info-card {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-left: 4px solid var(--color-primary);
+    background: #fafbfc;
+    box-shadow: none;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: var(--radius-md);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.shift-badge {
+    background: var(--color-primary);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: white;
+    box-shadow: 0 2px 8px rgba(45, 95, 78, 0.2);
+}
+
+.timestamp {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--color-card);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+}
+
+.staff-name {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+/* 詳細區塊 */
+.detail-section {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+.detail-section+.detail-section {
+    margin-top: var(--spacing-xl);
+}
+
+.detail-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.detail-section-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* 空狀態 */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--color-border);
+}
+
+/* 房間分組 */
+.room-group {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all var(--transition-base);
+}
+
+.room-group:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.room-group:last-child {
+    margin-bottom: 0;
+}
+
+.room-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* 備品項目 */
+.inventory-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+    background: white;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-base);
+}
+
+.inventory-item:hover {
+    background: var(--color-card);
+    transform: translateX(4px);
+}
+
+.inventory-item:last-child {
+    margin-bottom: 0;
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+}
+
+.status-badge {
+    padding: 4px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.in {
+    background: var(--color-success-lighter);
+    color: var(--color-success-dark);
+}
+
+.status-badge.out {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.item-text {
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+}
+
+/* 臭氧卡片 - 深色主題 */
+.ozone-card {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    /* 深藍灰色漸變背景 */
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all var(--transition-base);
+}
+
+.ozone-card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ozone-card:last-child {
+    margin-bottom: 0;
+}
+
+.ozone-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.ozone-header>div {
+    flex: 1;
+}
+
+.ozone-floor {
+    font-size: 1.15rem;
+    font-weight: var(--font-weight-bold);
+    color: #e0f2fe;
+    /* 淺藍色文字 */
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.room-count {
+    font-size: 0.85rem;
+    font-weight: var(--font-weight-medium);
+    background: rgba(224, 242, 254, 0.15);
+    color: #bae6fd;
+    /* 更淺的藍色 */
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(186, 230, 253, 0.3);
+}
+
+.ozone-rooms {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    /* 淺灰色 */
+    line-height: 1.5;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.ozone-time {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    /* 中性灰色 */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: transparent;
+    width: auto;
+}
+
+.duration-badge {
+    background: rgba(186, 230, 253, 0.2);
+    color: #bae6fd;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 8px;
+    border: 1px solid rgba(186, 230, 253, 0.3);
+}
+
+.ozone-notes {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-top: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #60a5fa;
+}
+
+/* 交班事項卡片 */
+.handover-item-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background: white;
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--color-primary);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.handover-item-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateX(4px);
+}
+
+.handover-item-card:last-child {
+    margin-bottom: 0;
+}
+
+.handover-item-card .item-content {
+    flex: 1;
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+/* 編輯模式刪除按鈕 */
+.delete-btn-inline {
+    background: transparent;
+    border: none;
+    color: var(--color-danger);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.delete-btn-inline:hover {
+    background: var(--color-danger);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* 響應式 */
+@media (max-width: 1024px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+}
+
+@media (max-width: 767px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .handover-detail-content {
+        padding: 0 var(--spacing-md) var(--spacing-lg);
+    }
+
+    .info-card {
+        padding: var(--spacing-lg);
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-section {
+        padding: 0;
+    }
+
+    .room-group {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* 載入動畫 */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    gap: var(--spacing-md);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,683 @@
+/* 繼承原有的 Page 容器 */
+.ozone-stats-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 標籤頁樣式 */
+.ozone-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-xs);
+}
+
+.ozone-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.ozone-tab:hover {
+    background-color: var(--color-background-hover);
+    color: var(--color-text-primary);
+}
+
+.ozone-tab.active {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* 佈局容器 (僅用於日查詢) */
+.ozone-dashboard-container {
+    display: flex;
+    gap: var(--spacing-md);
+    flex: 1;
+    /* 佔滿剩餘高度 */
+    overflow: hidden;
+    /* 防止整個頁面捲動 */
+    min-height: 0;
+}
+
+/* 左側面板 - 日查詢 & 月曆 */
+.dashboard-left-panel {
+    flex: 1;
+    /* 改為 1:1 */
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+    /* 內部滾動 */
+    border: 1px solid var(--color-border);
+}
+
+/* 右側面板 - 預約管理 */
+.dashboard-right-panel {
+    flex: 1;
+    /* 改為 1:1 */
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.panel-title {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-primary);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--color-background);
+}
+
+/* 自定義日曆樣式 - 縮小版 */
+.custom-calendar {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: var(--color-background-hover);
+    border-radius: var(--radius-md);
+    max-width: 350px;
+    /* 限制寬度 */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+    font-size: var(--font-size-base);
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    /* 縮小間距 */
+    text-align: center;
+}
+
+.calendar-day-header {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    padding-bottom: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 13px;
+    /* 縮小字體 */
+    transition: all 0.2s;
+    width: 32px;
+    /* 固定寬度確保圓形 */
+    height: 32px;
+    margin: 0 auto;
+}
+
+.calendar-day:hover:not(.empty) {
+    background-color: var(--color-background);
+}
+
+.calendar-day.selected {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.calendar-day.today {
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+}
+
+.calendar-day.selected.today {
+    color: white;
+}
+
+/* 表格樣式優化 */
+.daily-records-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.ozone-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ozone-table th {
+    text-align: left;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+.ozone-table td {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: var(--font-size-sm);
+}
+
+/* 狀態 Badge */
+.status-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-completed {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.status-processing {
+    background-color: var(--color-warning);
+    color: white;
+}
+
+.status-scheduled {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+/* 預約管理內部佈局 */
+.reservation-inner-layout {
+    display: flex;
+    flex-direction: row;
+    /* 改為水平排列 */
+    flex: 1;
+    gap: var(--spacing-sm);
+    overflow: hidden;
+}
+
+/* 左側：預約列表 */
+.reservation-list {
+    flex: 1;
+    /* 1:1 佔比 */
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.reservation-card-simple {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+}
+
+.res-card-info h4 {
+    margin: 0 0 2px 0;
+    font-size: var(--font-size-sm);
+}
+
+.res-card-time {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+/* 右側：快速新增表單 */
+.quick-add-form {
+    flex: 1;
+    /* 1:1 佔比 */
+    /* 移除 height: fit-content 以便填滿高度 */
+    background-color: #f7f7f5;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    overflow-y: auto;
+    /* 允許表單內容過長時滾動 */
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-add-title {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-base);
+    /* 恢復正常字體大小 */
+    font-weight: 600;
+}
+
+.form-group-sm {
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-group-sm label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    /* 調大字體 */
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.form-control-sm {
+    width: 100%;
+    padding: 8px;
+    /* 增加 Padding */
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    /* 調大字體 */
+    background: white;
+}
+
+/* 房號多選按鈕區 */
+.room-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    /* 保持 3 欄 */
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.room-select-btn {
+    padding: 6px 4px;
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 4px;
+    font-size: 13px;
+    /* 調大字體 */
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.room-select-btn:hover {
+    background: #eee;
+}
+
+.room-select-btn.selected {
+    background: #3d5a45;
+    color: white;
+    border-color: #3d5a45;
+}
+
+.form-row {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-add-reservation {
+    width: 100%;
+    background-color: #3d5a45;
+    color: white;
+    padding: 10px;
+    /* 增加 Padding */
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: auto;
+    /* 讓按鈕推到底部，或視需求保持間距。若要填滿灰色，建議讓按鈕在內容下方，灰色填滿剩餘。
+       這裡改回 auto 可以確保按鈕在內容較少時也不會浮在半空中，而是沉在底部嗎？
+       使用者說 "快速新增下方空白用灰色補齊"，如果內容少，灰色背景已經補齊了。
+       按鈕位置與其說是 "下方"，不如說是表單的最後一個元素。
+       如果希望按鈕緊跟著表單內容，就不用 auto。
+       依照使用者之前需求 "不要有中間多餘的灰色區域"，推測是指 按鈕與表單內容之間不要有空白。
+       所以這裡使用固定 margin-top */
+    margin-top: 16px;
+    font-size: 14px;
+    /* 調大字體 */
+}
+
+.btn-add-reservation:hover {
+    background-color: #2c4233;
+}
+
+/* 預約管理 TAB 滿版列表 */
+.reservation-list-full {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.btn-action {
+    padding: 4px 8px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-action:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* 其他 Tab 內容樣式 (Copied from previous) */
+.tab-content {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    flex: 1;
+    overflow-y: auto;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    background: var(--color-background);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+}
+
+.monthly-stats h3 {
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-lg);
+}
+
+.floor-stat-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.floor-stat-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: var(--spacing-sm);
+}
+
+.room-stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.room-stat-item {
+    background: var(--color-background);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.room-number {
+    font-weight: 600;
+}
+
+/* Priority Card */
+.priority-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.priority-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: white;
+}
+
+.priority-badge {
+    color: white;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+}
+
+/* 月統計重新設計樣式 */
+.monthly-tab-content {
+    background-color: var(--color-background);
+    /* 整個背景偏灰 */
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    border: none;
+    /* 移除原本的邊框 */
+}
+
+/* 乾淨的篩選列 */
+.filter-row-clean {
+    display: flex;
+    gap: var(--spacing-lg);
+    background: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    align-items: center;
+    width: fit-content;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.clean-input,
+.clean-select {
+    border: 1px solid #ddd;
+    /* 改用淺灰邊框 */
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: white;
+    /* 改為白色背景 */
+    font-size: var(--font-size-sm);
+    transition: border-color 0.2s;
+}
+
+.clean-input:focus,
+.clean-select:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+/* 佈局 */
+.monthly-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* 圖表區塊 */
+.chart-section-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-section-card h3 {
+    width: 100%;
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.chart-content {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 甜甜圈圖 */
+.donut-chart {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    position: relative;
+    /* Background set inline */
+}
+
+.donut-inner-circle {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    background: white;
+    border-radius: 50%;
+    top: 25%;
+    left: 25%;
+}
+
+/* 圖例 */
+.chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-label {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.legend-value {
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+/* 樓層統計網格 */
+.floor-stats-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 兩欄 */
+    gap: var(--spacing-md);
+}
+
+.floor-stat-card-clean {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.floor-head-clean {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: var(--spacing-sm);
+}
+
+.floor-title {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.floor-total {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.floor-rooms-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.room-item-clean {
+    background: #f0f4f1;
+    /* 改為極淺的綠色背景，呼應主色調 */
+    padding: 6px 12px;
+    border-radius: 4px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: var(--font-size-sm);
+    border: 1px solid transparent;
+    /* 移除明顯邊框 */
+    color: #2c4233;
+}
+
+.room-num {
+    font-weight: 600;
+    color: #3d5a45;
+}
+
+.room-val {
+    color: #666;
+    font-size: 13px;
+}
