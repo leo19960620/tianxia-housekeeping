@@ -1,0 +1,171 @@
+import express from 'express';
+import { query } from '../database/db.js';
+
+const router = express.Router();
+
+/**
+ * GET /api/umbrella-rentals
+ * 查詢雨傘租借紀錄（支援 status 過濾）
+ */
+router.get('/', async (req, res) => {
+    try {
+        const { status } = req.query;
+
+        let sql = 'SELECT * FROM umbrella_rentals';
+        const params = [];
+
+        if (status) {
+            sql += ' WHERE status = $1';
+            params.push(status);
+        }
+
+        sql += ' ORDER BY rental_start_time DESC';
+
+        const result = await query(sql, params);
+
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('查詢雨傘租借紀錄錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
+/**
+ * GET /api/umbrella-rentals/active
+ * 查詢目前租借中的雨傘
+ */
+router.get('/active', async (req, res) => {
+    try {
+        const sql = `
+            SELECT * FROM umbrella_rentals 
+            WHERE status = 'active' 
+            ORDER BY rental_start_time DESC
+        `;
+
+        const result = await query(sql);
+
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('查詢目前租借雨傘錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
+/**
+ * POST /api/umbrella-rentals
+ * 建立雨傘租借紀錄
+ */
+router.post('/', async (req, res) => {
+    try {
+        const { umbrella_number, room_number, room_status, rented_by, notes } = req.body;
+
+        if (!umbrella_number || !rented_by) {
+            return res.status(400).json({
+                success: false,
+                message: '請提供雨傘編號和經手人'
+            });
+        }
+
+        const insertSql = `
+            INSERT INTO umbrella_rentals 
+            (umbrella_number, room_number, room_status, rented_by, notes) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *
+        `;
+        const result = await query(insertSql, [
+            umbrella_number,
+            room_number,
+            room_status,
+            rented_by,
+            notes
+        ]);
+
+        res.status(201).json({
+            success: true,
+            message: '雨傘租借記錄已建立',
+            data: result.rows[0]
+        });
+    } catch (error) {
+        console.error('建立雨傘租借紀錄錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
+/**
+ * PATCH /api/umbrella-rentals/:id/return
+ * 歸還雨傘
+ */
+router.patch('/:id/return', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { returned_by } = req.body;
+
+        if (!returned_by) {
+            return res.status(400).json({
+                success: false,
+                message: '請提供歸還經手人'
+            });
+        }
+
+        // 查詢租借紀錄
+        const rentalCheck = await query(
+            'SELECT status FROM umbrella_rentals WHERE id = $1',
+            [id]
+        );
+
+        if (rentalCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: '找不到此租借紀錄'
+            });
+        }
+
+        if (rentalCheck.rows[0].status === 'returned') {
+            return res.status(400).json({
+                success: false,
+                message: '此租借紀錄已歸還'
+            });
+        }
+
+        // 更新租借紀錄
+        const updateSql = `
+            UPDATE umbrella_rentals 
+            SET status = 'returned', 
+                rental_end_time = CURRENT_TIMESTAMP, 
+                returned_by = $1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 
+            RETURNING *
+        `;
+        const result = await query(updateSql, [returned_by, id]);
+
+        res.json({
+            success: true,
+            message: '雨傘已歸還',
+            data: result.rows[0]
+        });
+    } catch (error) {
+        console.error('歸還雨傘錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
+export default router;

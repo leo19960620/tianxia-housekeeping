@@ -4,6 +4,7 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
 import UserPicker from '../components/business/UserPicker';
+import { getTodayMidnight } from '../utils/timezone';
 import './AnnouncementsPage.css';
 
 function AnnouncementsPage() {
@@ -11,7 +12,7 @@ function AnnouncementsPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showUserPicker, setShowUserPicker] = useState(false);
-    const [activeTab, setActiveTab] = useState('active'); // 'active', 'expired', or 'recurring'
+    const [activeTab, setActiveTab] = useState('active'); // 'active', 'pending', 'expired', or 'recurring'
     const [searchKeyword, setSearchKeyword] = useState('');
     const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [isEditing, setIsEditing] = useState(false);
@@ -53,16 +54,17 @@ function AnnouncementsPage() {
 
     // 判斷公告狀態
     const getAnnouncementStatus = (announcement) => {
-        if (announcement.announcement_type === 'routine') return 'active';
+        if (announcement.announcement_type === 'routine') return 'routine';
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = getTodayMidnight(); // 使用時區工具
         const start = new Date(announcement.start_date);
         const end = new Date(announcement.end_date);
         start.setHours(0, 0, 0, 0);
         end.setHours(0, 0, 0, 0);
 
-        return start <= today && today <= end ? 'active' : 'inactive';
+        if (today < start) return 'pending';      // 未開始
+        if (start <= today && today <= end) return 'active';  // 進行中  
+        return 'inactive';  // 已到期
     };
 
     // 過濾公告
@@ -73,16 +75,22 @@ function AnnouncementsPage() {
         if (activeTab === 'active') {
             // 進行中：一般公告且在有效期內
             filtered = filtered.filter(ann => {
-                // 容錯處理：announcement_type 為 'general', 'normal' 或空值時都視為一般公告
                 const type = ann.announcement_type || 'normal';
                 const isNormalType = (type === 'normal' || type === 'general');
                 if (!isNormalType) return false;
                 return getAnnouncementStatus(ann) === 'active';
             });
+        } else if (activeTab === 'pending') {
+            // 未開始：一般公告且開始日期在未來
+            filtered = filtered.filter(ann => {
+                const type = ann.announcement_type || 'normal';
+                const isNormalType = (type === 'normal' || type === 'general');
+                if (!isNormalType) return false;
+                return getAnnouncementStatus(ann) === 'pending';
+            });
         } else if (activeTab === 'expired') {
             // 已到期：一般公告且已過期
             filtered = filtered.filter(ann => {
-                // 容錯處理：announcement_type 為 'general', 'normal' 或空值時都視為一般公告
                 const type = ann.announcement_type || 'normal';
                 const isNormalType = (type === 'normal' || type === 'general');
                 if (!isNormalType) return false;
@@ -126,6 +134,13 @@ function AnnouncementsPage() {
                 return true;
             });
         }
+
+        // 排序邏輯 - 所有公告都按開始日期降序（最新在上）
+        filtered.sort((a, b) => {
+            const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
+            const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
+            return dateB - dateA;
+        });
 
         return filtered;
     };
@@ -270,6 +285,12 @@ function AnnouncementsPage() {
                         進行中
                     </button>
                     <button
+                        className={`announcements-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                    >
+                        未開始
+                    </button>
+                    <button
                         className={`announcements-tab ${activeTab === 'expired' ? 'active' : ''}`}
                         onClick={() => setActiveTab('expired')}
                     >
@@ -319,7 +340,10 @@ function AnnouncementsPage() {
                                             <td>{ann.announcer || '-'}</td>
                                             <td>
                                                 <span className={`announcement-status-badge ${status}`}>
-                                                    {status === 'active' ? '進行中' : '已到期'}
+                                                    {status === 'routine' && '例行'}
+                                                    {status === 'pending' && '未開始'}
+                                                    {status === 'active' && '進行中'}
+                                                    {status === 'inactive' && '已到期'}
                                                 </span>
                                             </td>
                                             <td>

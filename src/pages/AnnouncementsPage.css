@@ -226,9 +226,19 @@
     color: var(--color-success);
 }
 
+.announcement-status-badge.pending {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+}
+
 .announcement-status-badge.inactive {
     background: rgba(158, 158, 158, 0.1);
     color: var(--color-text-secondary);
+}
+
+.announcement-status-badge.routine {
+    background: rgba(156, 39, 176, 0.1);
+    color: #7b1fa2;
 }
 
 /* 操作按鈕區 */

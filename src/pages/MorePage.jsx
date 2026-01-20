@@ -8,8 +8,10 @@ function MorePage() {
         { title: '備品管理', path: '/items', description: '管理備品項目與分類', color: 'var(--color-primary)' },
         { title: '使用者管理', path: '/users', description: '管理系統使用者', color: 'var(--color-info)' },
         { title: '臭氧統計', path: '/ozone-stats', description: '查看臭氧使用統計', color: 'var(--color-success)' },
+        { title: '租借管理', path: '/rental-management', description: '腳踏車與雨傘租借管理', color: 'var(--color-warning)' },
         { title: '系統設定', path: '/settings', description: '系統相關設定', color: 'var(--color-secondary)' },
     ];
+
 
     return (
         <div className="page more-page">

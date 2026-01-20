@@ -8,6 +8,7 @@ import Icon from '../components/common/Icon';
 import FloorSelectorModal from '../components/business/FloorSelectorModal';
 import MultiUserPicker from '../components/business/MultiUserPicker';
 import { INVENTORY_STATUS, FLOORS, SHIFTS, SHIFT_TIMES } from '../utils/constants';
+import { getTaipeiTimeForInput } from '../utils/timezone';
 import './HandoverDetailPage.css';
 
 function HandoverDetailPage() {
@@ -38,7 +39,7 @@ function HandoverDetailPage() {
     const [ozoneForm, setOzoneForm] = useState({
         floor: '',
         roomNumbers: [],
-        startTime: new Date().toISOString().slice(0, 16),
+        startTime: getTaipeiTimeForInput(),
         durationMinutes: 30,
         notes: '',
     });

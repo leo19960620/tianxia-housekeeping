@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { announcementAPI } from '../api/announcement';
 import { handoverAPI } from '../api/handover';
 import { handoverItemAPI } from '../api/handoverItem';
+import { getTodayMidnight } from '../utils/timezone';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
 import './HomePage.css';
@@ -34,8 +35,7 @@ function HomePage() {
             const todayDate = `${year}-${month}-${day}`;
 
             // 用於前端日期比較的今日 00:00
-            const todayMidnight = new Date();
-            todayMidnight.setHours(0, 0, 0, 0);
+            const todayMidnight = getTodayMidnight(); // 使用時區工具
 
             // 並行執行所有 API 請求以提升載入速度
             const [announcementsRes, handoversRes, itemsRes] = await Promise.all([
@@ -65,6 +65,10 @@ function HomePage() {
                         general.push(ann);
                     }
                 });
+
+                // 所有公告都按開始日期降序（最新在上）
+                general.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+                routine.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
 
                 setGeneralAnnouncements(general);
                 setRoutineAnnouncements(routine);
@@ -130,13 +134,13 @@ function HomePage() {
         const date = new Date(dateString);
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return `${hours}:${minutes} `;
     };
 
     const formatDateRange = (start, end) => {
         const startDate = new Date(start);
         const endDate = new Date(end);
-        return `${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}`;
+        return `${startDate.toLocaleDateString()} ~${endDate.toLocaleDateString()} `;
     };
 
     if (loading) {
@@ -327,7 +331,7 @@ function HomePage() {
                                                         className="shift-edit-btn"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigate(`/handover/${item.id}?edit=true`);
+                                                            navigate(`/ handover / ${item.id}?edit = true`);
                                                         }}
                                                         title="編輯交接紀錄"
                                                     >
@@ -389,7 +393,7 @@ function HomePage() {
                                                             <div className="detail-records-list">
                                                                 {item.inventory_records.map((record, idx) => (
                                                                     <div key={record.id || idx} className="detail-record-item">
-                                                                        <span className={`inventory-status-badge ${record.status === '收' ? 'receive' : 'return'}`}>
+                                                                        <span className={`inventory - status - badge ${record.status === '收' ? 'receive' : 'return'} `}>
                                                                             {record.status}
                                                                         </span>
                                                                         <span className="detail-record-text">

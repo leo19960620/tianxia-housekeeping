@@ -11,6 +11,11 @@ import userRoutes from './routes/users.js';
 import ozoneStatsRoutes from './routes/ozoneStats.js';
 import ozoneReservationsRoutes from './routes/ozoneReservations.js';
 import roomRoutes from './routes/rooms.js';
+import bicycleRoutes from './routes/bicycles.js';
+import bicycleRentalRoutes from './routes/bicycle-rentals.js';
+import bicycleMaintenanceRoutes from './routes/bicycle-maintenance.js';
+import umbrellaRentalRoutes from './routes/umbrella-rentals.js';
+
 
 dotenv.config();
 
@@ -65,6 +70,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/ozone/stats', ozoneStatsRoutes); // 臭氧統計
 app.use('/api/ozone/reservations', ozoneReservationsRoutes); // 臭氧預約
+app.use('/api/bicycles', bicycleRoutes); // 腳踏車管理
+app.use('/api/bicycle-rentals', bicycleRentalRoutes); // 腳踏車租借
+app.use('/api/bicycle-maintenance', bicycleMaintenanceRoutes); // 腳踏車維護
+app.use('/api/umbrella-rentals', umbrellaRentalRoutes); // 雨傘租借
+
 
 // 404處理
 app.use((req, res) => {
