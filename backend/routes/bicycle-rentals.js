@@ -75,7 +75,7 @@ router.get('/active', async (req, res) => {
 
 /**
  * POST /api/bicycle-rentals
- * 建立租借紀錄
+ * 建立租借紀錄（支援批次借出）
  */
 router.post('/', async (req, res) => {
     try {
@@ -88,57 +88,79 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // 檢查腳踏車是否可借
-        const bicycleCheck = await query(
-            'SELECT status FROM bicycles WHERE id = $1',
-            [bicycle_id]
-        );
+        // 支援批次借出：將 bicycle_id 轉為陣列
+        const bicycleIds = Array.isArray(bicycle_id) ? bicycle_id : [bicycle_id];
 
-        if (bicycleCheck.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: '找不到此腳踏車'
-            });
-        }
-
-        if (bicycleCheck.rows[0].status !== 'available') {
+        if (bicycleIds.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: '此腳踏車目前無法借出'
+                message: '請至少選擇一輛腳踏車'
             });
         }
 
-        // 建立租借紀錄
-        const insertSql = `
-            INSERT INTO bicycle_rentals 
-            (bicycle_id, room_number, room_status, rented_by, notes) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING *
-        `;
-        const result = await query(insertSql, [
-            bicycle_id,
-            room_number,
-            room_status,
-            rented_by,
-            notes
-        ]);
+        // 開始 transaction
+        await query('BEGIN');
 
-        // 更新腳踏車狀態為已借出
-        await query(
-            'UPDATE bicycles SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-            ['rented', bicycle_id]
-        );
+        try {
+            const createdRentals = [];
 
-        res.status(201).json({
-            success: true,
-            message: '租借記錄已建立',
-            data: result.rows[0]
-        });
+            for (const id of bicycleIds) {
+                // 檢查腳踏車是否可借
+                const bicycleCheck = await query(
+                    'SELECT status FROM bicycles WHERE id = $1',
+                    [id]
+                );
+
+                if (bicycleCheck.rows.length === 0) {
+                    throw new Error(`找不到腳踏車 ID: ${id}`);
+                }
+
+                if (bicycleCheck.rows[0].status !== 'available') {
+                    throw new Error(`腳踏車 ID ${id} 目前無法借出`);
+                }
+
+                // 建立租借紀錄
+                const insertSql = `
+                    INSERT INTO bicycle_rentals 
+                    (bicycle_id, room_number, room_status, rented_by, notes) 
+                    VALUES ($1, $2, $3, $4, $5) 
+                    RETURNING *
+                `;
+                const result = await query(insertSql, [
+                    id,
+                    room_number,
+                    room_status,
+                    rented_by,
+                    notes
+                ]);
+
+                // 更新腳踏車狀態為已借出
+                await query(
+                    'UPDATE bicycles SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                    ['rented', id]
+                );
+
+                createdRentals.push(result.rows[0]);
+            }
+
+            // 提交 transaction
+            await query('COMMIT');
+
+            res.status(201).json({
+                success: true,
+                message: `成功借出 ${bicycleIds.length} 輛腳踏車`,
+                data: createdRentals
+            });
+        } catch (error) {
+            // 回滾 transaction
+            await query('ROLLBACK');
+            throw error;
+        }
     } catch (error) {
         console.error('建立租借紀錄錯誤:', error);
         res.status(500).json({
             success: false,
-            message: '伺服器錯誤'
+            message: error.message || '伺服器錯誤'
         });
     }
 });

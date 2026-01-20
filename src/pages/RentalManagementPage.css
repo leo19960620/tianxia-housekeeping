@@ -103,6 +103,63 @@
     font-family: inherit;
 }
 
+/* 腳踏車複選框 */
+.bicycle-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+}
+
+.checkbox-item:hover {
+    background-color: var(--color-background-hover);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-item span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+/* 狀態徽章 */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-badge.status-active {
+    background-color: var(--color-warning-light, #fff3cd);
+    color: var(--color-warning);
+}
+
+.status-badge.status-returned {
+    background-color: var(--color-success-light, #d4edda);
+    color: var(--color-success);
+}
+
 /* 租借列表區塊 */
 .rental-list-section {
     background: white;
