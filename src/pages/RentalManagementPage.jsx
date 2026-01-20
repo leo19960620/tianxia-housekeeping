@@ -232,6 +232,17 @@ function RentalManagementPage() {
         return new Date(dateString).toLocaleDateString('zh-TW');
     };
 
+    // 切換腳踏車啟用狀態
+    const handleToggleActive = async (bicycle) => {
+        try {
+            await bicycleAPI.update(bicycle.id, { is_active: !bicycle.is_active });
+            alert(`已${bicycle.is_active ? '關閉' : '開啟'} ${bicycle.bicycle_number} 號`);
+            loadData();
+        } catch (error) {
+            alert(error.message || '操作失敗');
+        }
+    };
+
     if (loading) {
         return (
             <div className="page">
@@ -421,11 +432,22 @@ function RentalManagementPage() {
                                 const needsAirCheck = shouldRemindAirCheck(bicycle.last_air_check_date);
 
                                 return (
-                                    <div key={bicycle.id} className={`bicycle-card ${bicycle.status === 'maintenance' ? 'maintenance' : ''}`}>
+                                    <div key={bicycle.id} className={`bicycle-card ${bicycle.status === 'maintenance' ? 'maintenance' : ''} ${bicycle.is_active === false ? 'inactive' : ''}`}>
                                         <div className="bicycle-card-header">
                                             <div className="bicycle-number">{bicycle.bicycle_number} 號</div>
-                                            <div className={`bicycle-status status-${bicycle.status}`}>
-                                                {bicycle.status === 'available' ? '可借' : bicycle.status === 'rented' ? '已借出' : '維護中'}
+                                            <div className="bicycle-header-right">
+                                                <div className={`bicycle-status status-${bicycle.status}`}>
+                                                    {bicycle.status === 'available' ? '可借' : bicycle.status === 'rented' ? '已借出' : '維護中'}
+                                                </div>
+                                                <label className="switch" title={bicycle.status === 'rented' ? '已借出無法切換' : '切換開啟/關閉'}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={bicycle.is_active !== false}
+                                                        onChange={() => handleToggleActive(bicycle)}
+                                                        disabled={bicycle.status === 'rented'}
+                                                    />
+                                                    <span className="slider"></span>
+                                                </label>
                                             </div>
                                         </div>
                                         <div className="bicycle-card-body">

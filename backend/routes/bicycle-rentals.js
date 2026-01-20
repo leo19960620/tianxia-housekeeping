@@ -107,7 +107,7 @@ router.post('/', async (req, res) => {
             for (const id of bicycleIds) {
                 // 檢查腳踏車是否可借
                 const bicycleCheck = await query(
-                    'SELECT status FROM bicycles WHERE id = $1',
+                    'SELECT status, is_active FROM bicycles WHERE id = $1',
                     [id]
                 );
 
@@ -116,7 +116,12 @@ router.post('/', async (req, res) => {
                 }
 
                 if (bicycleCheck.rows[0].status !== 'available') {
-                    throw new Error(`腳踏車 ID ${id} 目前無法借出`);
+                    throw new Error(`腳踏車 ID ${id} 目前無法借出（狀態：${bicycleCheck.rows[0].status}）`);
+                }
+
+                // 檢查是否啟用
+                if (bicycleCheck.rows[0].is_active === false) {
+                    throw new Error(`腳踏車 ID ${id} 目前已關閉，無法借出`);
                 }
 
                 // 建立租借紀錄

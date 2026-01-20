@@ -87,7 +87,7 @@ router.get('/:id', async (req, res) => {
 router.patch('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, appearance_condition, notes } = req.body;
+        const { status, appearance_condition, notes, is_active } = req.body;
 
         const updates = [];
         const values = [];
@@ -104,6 +104,10 @@ router.patch('/:id', async (req, res) => {
         if (notes !== undefined) {
             updates.push(`notes = $${paramCount++}`);
             values.push(notes);
+        }
+        if (typeof is_active === 'boolean') {
+            updates.push(`is_active = $${paramCount++}`);
+            values.push(is_active);
         }
 
         updates.push(`updated_at = CURRENT_TIMESTAMP`);
