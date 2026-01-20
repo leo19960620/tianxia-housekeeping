@@ -15,7 +15,7 @@ export const bicycleAPI = {
  * 腳踏車租借 API
  */
 export const bicycleRentalAPI = {
-    getAll: (status) => api.get('/bicycle-rentals', { params: { status } }),
+    getAll: (params) => api.get('/bicycle-rentals', { params }),
 
     getActive: () => api.get('/bicycle-rentals/active'),
 
@@ -39,7 +39,7 @@ export const bicycleMaintenanceAPI = {
  * 雨傘租借 API
  */
 export const umbrellaRentalAPI = {
-    getAll: (status) => api.get('/umbrella-rentals', { params: { status } }),
+    getAll: (params) => api.get('/umbrella-rentals', { params }),
 
     getActive: () => api.get('/umbrella-rentals/active'),
 

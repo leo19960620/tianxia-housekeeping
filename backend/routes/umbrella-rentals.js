@@ -9,14 +9,27 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, date } = req.query;
 
         let sql = 'SELECT * FROM umbrella_rentals';
         const params = [];
+        const conditions = [];
+        let paramCount = 1;
 
         if (status) {
-            sql += ' WHERE status = $1';
+            conditions.push(`status = $${paramCount++}`);
             params.push(status);
+        }
+
+        // 日期篩選（台北時區 UTC+8）
+        if (date) {
+            // date 格式: YYYY-MM-DD
+            conditions.push(`DATE(rental_start_time AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Taipei') = $${paramCount++}`);
+            params.push(date);
+        }
+
+        if (conditions.length > 0) {
+            sql += ' WHERE ' + conditions.join(' AND ');
         }
 
         sql += ' ORDER BY rental_start_time DESC';

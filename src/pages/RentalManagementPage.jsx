@@ -12,6 +12,14 @@ function RentalManagementPage() {
     const [bicycleRentals, setBicycleRentals] = useState([]);
     const [umbrellaRentals, setUmbrellaRentals] = useState([]);
     const [rentalHistory, setRentalHistory] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(() => {
+        // 直接使用本地今天的日期
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    });
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showReturnModal, setShowReturnModal] = useState(false);
@@ -76,15 +84,19 @@ function RentalManagementPage() {
             }
 
             if (activeTab === 'rental-history') {
+                console.log('[租借紀錄] 查詢日期:', selectedDate);
                 const [bicycleHistoryRes, umbrellaHistoryRes] = await Promise.all([
-                    bicycleRentalAPI.getAll(),
-                    umbrellaRentalAPI.getAll()
+                    bicycleRentalAPI.getAll({ date: selectedDate }),
+                    umbrellaRentalAPI.getAll({ date: selectedDate })
                 ]);
+                console.log('[租借紀錄] 腳踏車 API 回應:', bicycleHistoryRes);
+                console.log('[租借紀錄] 雨傘 API 回應:', umbrellaHistoryRes);
                 if (bicycleHistoryRes.success && umbrellaHistoryRes.success) {
                     const combined = [
                         ...bicycleHistoryRes.data.map(r => ({ ...r, type: 'bicycle' })),
                         ...umbrellaHistoryRes.data.map(r => ({ ...r, type: 'umbrella' }))
                     ].sort((a, b) => new Date(b.rental_start_time) - new Date(a.rental_start_time));
+                    console.log('[租借紀錄] 合併後資料:', combined);
                     setRentalHistory(combined);
                 }
             }
@@ -232,13 +244,23 @@ function RentalManagementPage() {
         return new Date(dateString).toLocaleDateString('zh-TW');
     };
 
-    // 切換腳踏車啟用狀態
+    // 切換腳踏車啟用狀態（樂觀更新）
     const handleToggleActive = async (bicycle) => {
+        const newIsActive = !bicycle.is_active;
+
+        // 立即更新 UI（樂觀更新）
+        setBicycles(prev => prev.map(b =>
+            b.id === bicycle.id ? { ...b, is_active: newIsActive } : b
+        ));
+
         try {
-            await bicycleAPI.update(bicycle.id, { is_active: !bicycle.is_active });
-            alert(`已${bicycle.is_active ? '關閉' : '開啟'} ${bicycle.bicycle_number} 號`);
-            loadData();
+            // 背景更新到伺服器
+            await bicycleAPI.update(bicycle.id, { is_active: newIsActive });
         } catch (error) {
+            // 如果失敗，回滾狀態
+            setBicycles(prev => prev.map(b =>
+                b.id === bicycle.id ? { ...b, is_active: bicycle.is_active } : b
+            ));
             alert(error.message || '操作失敗');
         }
     };
@@ -618,7 +640,20 @@ function RentalManagementPage() {
             {activeTab === 'rental-history' && (
                 <div className="rental-content">
                     <div className="rental-list-section">
-                        <h3>所有租借紀錄 ({rentalHistory.length})</h3>
+                        <div className="rental-history-header">
+                            <h3>租借紀錄</h3>
+                            <div className="date-picker-container">
+                                <label htmlFor="rental-date">查詢日期：</label>
+                                <input
+                                    id="rental-date"
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="date-picker"
+                                />
+                            </div>
+                        </div>
+                        <p className="rental-count">共 {rentalHistory.length} 筆記錄</p>
                         {rentalHistory.length === 0 ? (
                             <p className="empty-message">目前無租借紀錄</p>
                         ) : (
