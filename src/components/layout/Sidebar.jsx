@@ -50,12 +50,19 @@ function Sidebar() {
             path: '/ozone-stats',
         },
         {
+            id: 'rental',
+            label: '租借管理',
+            icon: 'bicycle',
+            path: '/rental-management',
+        },
+        {
             id: 'settings',
             label: '系統設定',
             icon: 'settings',
             path: '/settings',
         },
     ];
+
 
     const isActive = (path) => {
         if (path === '/') {
