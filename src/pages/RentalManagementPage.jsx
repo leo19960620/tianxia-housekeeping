@@ -24,8 +24,19 @@ function RentalManagementPage() {
     const [loading, setLoading] = useState(true);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+    const [showMaintenanceHistoryModal, setShowMaintenanceHistoryModal] = useState(false);
+    const [showBatchMaintenanceModal, setShowBatchMaintenanceModal] = useState(false);
+    const [showEditRentalModal, setShowEditRentalModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [selectedBicycle, setSelectedBicycle] = useState(null);
+    const [maintenanceHistory, setMaintenanceHistory] = useState([]);
+    const [selectedMaintenanceMonth, setSelectedMaintenanceMonth] = useState(new Date());
+    const [selectedBicyclesForBatch, setSelectedBicyclesForBatch] = useState([]);
+    const [editRentalForm, setEditRentalForm] = useState({
+        bicycle_number: '',
+        umbrella_number: '',
+        room_number: ''
+    });
 
     // 腳踏車租借表單（支援複選）
     const [bicycleRentalForm, setBicycleRentalForm] = useState({
@@ -48,6 +59,13 @@ function RentalManagementPage() {
     // 維護表單
     const [maintenanceForm, setMaintenanceForm] = useState({
         maintenance_type: 'air_check',
+        performed_by: '',
+        notes: ''
+    });
+
+    // 批次維護表單
+    const [batchMaintenanceForm, setBatchMaintenanceForm] = useState({
+        maintenance_types: ['air_check', 'cleaning'], // 預設勾選打氣和擦拭
         performed_by: '',
         notes: ''
     });
@@ -216,6 +234,115 @@ function RentalManagementPage() {
     const openMaintenanceModal = (bicycle) => {
         setSelectedBicycle(bicycle);
         setShowMaintenanceModal(true);
+    };
+
+    // 開啟編輯租借對話框
+    const openEditRentalModal = (item, type) => {
+        setSelectedItem({ ...item, type });
+        setEditRentalForm({
+            bicycle_number: type === 'bicycle' ? item.bicycle_number : '',
+            umbrella_number: type === 'umbrella' ? item.umbrella_number : '',
+            room_number: item.room_number || ''
+        });
+        setShowEditRentalModal(true);
+    };
+
+    // 處理編輯租借資訊
+    const handleEditRental = async () => {
+        try {
+            const updateData = {
+                room_number: editRentalForm.room_number
+            };
+
+            if (selectedItem.type === 'bicycle') {
+                updateData.bicycle_number = editRentalForm.bicycle_number;
+                await bicycleRentalAPI.update(selectedItem.id, updateData);
+            } else {
+                updateData.umbrella_number = editRentalForm.umbrella_number;
+                await umbrellaRentalAPI.update(selectedItem.id, updateData);
+            }
+
+            alert('更新成功');
+            setShowEditRentalModal(false);
+            setEditRentalForm({ bicycle_number: '', umbrella_number: '', room_number: '' });
+            loadData();
+        } catch (error) {
+            alert(error.message || '更新失敗');
+        }
+    };
+
+    // 開啟維護紀錄對話框
+    const openMaintenanceHistoryModal = async (bicycle) => {
+        setSelectedBicycle(bicycle);
+        setSelectedMaintenanceMonth(new Date()); // 重置為當前月份
+        try {
+            const response = await bicycleMaintenanceAPI.getByBicycleId(bicycle.id);
+            if (response.success) {
+                setMaintenanceHistory(response.data || []);
+            }
+            setShowMaintenanceHistoryModal(true);
+        } catch (error) {
+            alert('無法載入維護紀錄');
+        }
+    };
+
+    // 批次維護處理
+    const handleBatchMaintenance = async () => {
+        if (!batchMaintenanceForm.performed_by) {
+            alert('請選擇執行人員');
+            return;
+        }
+
+        if (selectedBicyclesForBatch.length === 0) {
+            alert('請選擇至少一台車輛');
+            return;
+        }
+
+        if (batchMaintenanceForm.maintenance_types.length === 0) {
+            alert('請選擇至少一種維護類型');
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            let failCount = 0;
+
+            // 為每台選中的車輛建立維護紀錄
+            for (const bicycleId of selectedBicyclesForBatch) {
+                try {
+                    // 為每種維護類型建立一筆紀錄
+                    for (const maintenanceType of batchMaintenanceForm.maintenance_types) {
+                        await bicycleMaintenanceAPI.create({
+                            bicycle_id: bicycleId,
+                            maintenance_type: maintenanceType,
+                            performed_by: batchMaintenanceForm.performed_by,
+                            notes: batchMaintenanceForm.notes
+                        });
+                    }
+                    successCount++;
+                } catch (error) {
+                    console.error(`車輛 ${bicycleId} 維護失敗:`, error);
+                    failCount++;
+                }
+            }
+
+            if (failCount === 0) {
+                alert(`成功為 ${successCount} 台車輛建立維護紀錄`);
+            } else {
+                alert(`成功: ${successCount} 台\n失敗: ${failCount} 台`);
+            }
+
+            setShowBatchMaintenanceModal(false);
+            setSelectedBicyclesForBatch([]);
+            setBatchMaintenanceForm({
+                maintenance_types: ['air_check', 'cleaning'],
+                performed_by: '',
+                notes: ''
+            });
+            loadData();
+        } catch (error) {
+            alert(error.message || '批次維護失敗');
+        }
     };
 
     // 檢查是否該打氣（週二提醒）
@@ -409,13 +536,23 @@ function RentalManagementPage() {
                                                     <Icon name="bicycle" size={24} color="var(--color-primary)" />
                                                     <span>{rental.bicycle_number} 號</span>
                                                 </div>
-                                                <Button
-                                                    variant="success"
-                                                    size="small"
-                                                    onClick={() => openReturnModal(rental, 'bicycle')}
-                                                >
-                                                    歸還
-                                                </Button>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="small"
+                                                        onClick={() => openEditRentalModal(rental, 'bicycle')}
+                                                    >
+                                                        <Icon name="create" size={16} />
+                                                        編輯
+                                                    </Button>
+                                                    <Button
+                                                        variant="success"
+                                                        size="small"
+                                                        onClick={() => openReturnModal(rental, 'bicycle')}
+                                                    >
+                                                        歸還
+                                                    </Button>
+                                                </div>
                                             </div>
                                             <div className="rental-card-body">
                                                 <div className="rental-info-row">
@@ -448,6 +585,15 @@ function RentalManagementPage() {
                 {/* 腳踏車維護頁籤 */}
                 {activeTab === 'bicycle-maintenance' && (
                     <div className="rental-content">
+                        {/* 批次維護按鈕 */}
+                        <Button
+                            onClick={() => setShowBatchMaintenanceModal(true)}
+                            style={{ marginBottom: '16px' }}
+                        >
+                            <Icon name="checkmark-done" size={20} />
+                            批次維護
+                        </Button>
+
                         <div className="maintenance-grid">
                             {bicycles.map(bicycle => {
                                 const maintenanceInfo = bicycle.maintenance_info || {};
@@ -479,7 +625,10 @@ function RentalManagementPage() {
                                                     color={needsAirCheck ? "var(--color-warning)" : "var(--color-success)"} />
                                                 <div>
                                                     <div className="maintenance-label">上次打氣</div>
-                                                    <div className="maintenance-value">{formatDate(bicycle.last_air_check_date)}</div>
+                                                    <div className="maintenance-value">
+                                                        {formatDate(bicycle.last_air_check_date)}
+                                                        {bicycle.last_air_check_by && ` ・ ${bicycle.last_air_check_by}`}
+                                                    </div>
                                                     {needsAirCheck && <div className="maintenance-reminder">⚠️ 建議打氣</div>}
                                                 </div>
                                             </div>
@@ -487,7 +636,10 @@ function RentalManagementPage() {
                                                 <Icon name="water" size={18} color="var(--color-info)" />
                                                 <div>
                                                     <div className="maintenance-label">上次擦拭</div>
-                                                    <div className="maintenance-value">{formatDate(bicycle.last_cleaning_date)}</div>
+                                                    <div className="maintenance-value">
+                                                        {formatDate(bicycle.last_cleaning_date)}
+                                                        {bicycle.last_cleaning_by && ` ・ ${bicycle.last_cleaning_by}`}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="maintenance-item">
@@ -498,14 +650,23 @@ function RentalManagementPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Button
-                                            variant="secondary"
-                                            fullWidth
-                                            onClick={() => openMaintenanceModal(bicycle)}
-                                            disabled={bicycle.status === 'rented'}
-                                        >
-                                            記錄維護
-                                        </Button>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                            <Button
+                                                variant="secondary"
+                                                fullWidth
+                                                onClick={() => openMaintenanceModal(bicycle)}
+                                                disabled={bicycle.status === 'rented'}
+                                            >
+                                                開始維護
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                fullWidth
+                                                onClick={() => openMaintenanceHistoryModal(bicycle)}
+                                            >
+                                                維護紀錄
+                                            </Button>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -599,13 +760,23 @@ function RentalManagementPage() {
                                                     <Icon name="umbrella" size={24} color="var(--color-info)" />
                                                     <span>{rental.umbrella_number}</span>
                                                 </div>
-                                                <Button
-                                                    variant="success"
-                                                    size="small"
-                                                    onClick={() => openReturnModal(rental, 'umbrella')}
-                                                >
-                                                    歸還
-                                                </Button>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="small"
+                                                        onClick={() => openEditRentalModal(rental, 'umbrella')}
+                                                    >
+                                                        <Icon name="create" size={16} />
+                                                        編輯
+                                                    </Button>
+                                                    <Button
+                                                        variant="success"
+                                                        size="small"
+                                                        onClick={() => openReturnModal(rental, 'umbrella')}
+                                                    >
+                                                        歸還
+                                                    </Button>
+                                                </div>
                                             </div>
                                             <div className="rental-card-body">
                                                 <div className="rental-info-row">
@@ -803,6 +974,236 @@ function RentalManagementPage() {
                         </Button>
                         <Button fullWidth onClick={handleMaintenance}>
                             記錄
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+            {/* 維護紀錄 Modal */}
+            <Modal
+                isOpen={showMaintenanceHistoryModal}
+                onClose={() => setShowMaintenanceHistoryModal(false)}
+                title={`維護紀錄 - ${selectedBicycle?.bicycle_number} 號`}
+            >
+                <div style={{ padding: 'var(--spacing-md)' }}>
+                    {/* 月份選擇器 */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '16px',
+                        padding: '12px',
+                        backgroundColor: 'var(--color-background-secondary)',
+                        borderRadius: '8px'
+                    }}>
+                        <button
+                            onClick={() => {
+                                const newMonth = new Date(selectedMaintenanceMonth);
+                                newMonth.setMonth(newMonth.getMonth() - 1);
+                                setSelectedMaintenanceMonth(newMonth);
+                            }}
+                            style={{ padding: '4px 8px', cursor: 'pointer' }}
+                        >
+                            <Icon name="chevron-back" size={24} />
+                        </button>
+                        <span style={{ fontWeight: '600', fontSize: '16px' }}>
+                            {selectedMaintenanceMonth.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' })}
+                        </span>
+                        <button
+                            onClick={() => {
+                                const newMonth = new Date(selectedMaintenanceMonth);
+                                newMonth.setMonth(newMonth.getMonth() + 1);
+                                setSelectedMaintenanceMonth(newMonth);
+                            }}
+                            style={{ padding: '4px 8px', cursor: 'pointer' }}
+                        >
+                            <Icon name="chevron-forward" size={24} />
+                        </button>
+                    </div>
+
+                    {/* 紀錄列表 */}
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        {(() => {
+                            // 篩選當前選擇月份的維護紀錄
+                            const filteredRecords = maintenanceHistory.filter(record => {
+                                const recordDate = new Date(record.maintenance_date);
+                                return recordDate.getFullYear() === selectedMaintenanceMonth.getFullYear() &&
+                                    recordDate.getMonth() === selectedMaintenanceMonth.getMonth();
+                            });
+
+                            if (filteredRecords.length === 0) {
+                                return <p className="empty-message">此月份無維護紀錄</p>;
+                            }
+
+                            return filteredRecords.map((record, index) => (
+                                <div key={index} style={{
+                                    padding: '12px',
+                                    marginBottom: '8px',
+                                    backgroundColor: 'var(--color-background-secondary)',
+                                    borderRadius: '8px'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <strong>
+                                            {record.maintenance_type === 'air_check' ? '車胎打氣' :
+                                                record.maintenance_type === 'cleaning' ? '車身擦拭' : '外觀檢查'}
+                                        </strong>
+                                        <span>{new Date(record.maintenance_date).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })}</span>
+                                    </div>
+                                    <div><Icon name="person" size={16} /> 執行人：{record.performed_by}</div>
+                                    {record.notes && <div style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--color-text-secondary)' }}>備註：{record.notes}</div>}
+                                </div>
+                            ));
+                        })()}
+                    </div>
+                </div>
+            </Modal>
+            {/* 批次維護 Modal */}
+            <Modal
+                isOpen={showBatchMaintenanceModal}
+                onClose={() => setShowBatchMaintenanceModal(false)}
+                title="批次維護"
+            >
+                <div style={{ padding: 'var(--spacing-md)' }}>
+                    <div className="form-group">
+                        <label>選擇車輛 * ({selectedBicyclesForBatch.length} 台已選)</label>
+                        <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px' }}>
+                            {bicycles.filter(b => b.status !== 'rented').map((bicycle) => (
+                                <label key={bicycle.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedBicyclesForBatch.includes(bicycle.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedBicyclesForBatch([...selectedBicyclesForBatch, bicycle.id]);
+                                            } else {
+                                                setSelectedBicyclesForBatch(selectedBicyclesForBatch.filter(id => id !== bicycle.id));
+                                            }
+                                        }}
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span>{bicycle.bicycle_number} 號</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>維護類型 *</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {[
+                                { key: 'air_check', label: '車胎打氣' },
+                                { key: 'cleaning', label: '車身擦拭' }
+                            ].map((item) => (
+                                <label key={item.key} style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', border: '1px solid var(--color-primary)', borderRadius: '20px', cursor: 'pointer', backgroundColor: batchMaintenanceForm.maintenance_types.includes(item.key) ? 'var(--color-primary)' : 'transparent', color: batchMaintenanceForm.maintenance_types.includes(item.key) ? 'white' : 'var(--color-primary)' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={batchMaintenanceForm.maintenance_types.includes(item.key)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setBatchMaintenanceForm({
+                                                    ...batchMaintenanceForm,
+                                                    maintenance_types: [...batchMaintenanceForm.maintenance_types, item.key]
+                                                });
+                                            } else {
+                                                setBatchMaintenanceForm({
+                                                    ...batchMaintenanceForm,
+                                                    maintenance_types: batchMaintenanceForm.maintenance_types.filter(t => t !== item.key)
+                                                });
+                                            }
+                                        }}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <span>{item.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>執行人員 *</label>
+                        <select
+                            value={batchMaintenanceForm.performed_by}
+                            onChange={(e) => setBatchMaintenanceForm({ ...batchMaintenanceForm, performed_by: e.target.value })}
+                            className="form-select"
+                        >
+                            <option value="">請選擇執行人員</option>
+                            {users.map(user => (
+                                <option key={user.id} value={user.full_name}>
+                                    {user.full_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label>備註（選填）</label>
+                        <textarea
+                            value={batchMaintenanceForm.notes}
+                            onChange={(e) => setBatchMaintenanceForm({ ...batchMaintenanceForm, notes: e.target.value })}
+                            className="form-textarea"
+                            rows={3}
+                            placeholder="選填"
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
+                        <Button variant="secondary" fullWidth onClick={() => setShowBatchMaintenanceModal(false)}>
+                            取消
+                        </Button>
+                        <Button fullWidth onClick={handleBatchMaintenance}>
+                            確認建立
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* 編輯租借資訊 Modal */}
+            <Modal
+                isOpen={showEditRentalModal}
+                onClose={() => setShowEditRentalModal(false)}
+                title={`編輯${selectedItem?.type === 'bicycle' ? '腳踏車' : '雨傘'}租借資訊`}
+            >
+                <div style={{ padding: 'var(--spacing-md)' }}>
+                    {selectedItem?.type === 'bicycle' ? (
+                        <div className="form-group">
+                            <label>車號 *</label>
+                            <input
+                                type="text"
+                                value={editRentalForm.bicycle_number}
+                                onChange={(e) => setEditRentalForm({ ...editRentalForm, bicycle_number: e.target.value })}
+                                className="form-input"
+                                placeholder="例如: 1 或 2"
+                            />
+                        </div>
+                    ) : (
+                        <div className="form-group">
+                            <label>雨傘編號 *</label>
+                            <input
+                                type="text"
+                                value={editRentalForm.umbrella_number}
+                                onChange={(e) => setEditRentalForm({ ...editRentalForm, umbrella_number: e.target.value })}
+                                className="form-input"
+                                placeholder="請輸入雨傘編號"
+                            />
+                        </div>
+                    )}
+
+                    <div className="form-group">
+                        <label>房號</label>
+                        <input
+                            type="text"
+                            value={editRentalForm.room_number}
+                            onChange={(e) => setEditRentalForm({ ...editRentalForm, room_number: e.target.value })}
+                            className="form-input"
+                            placeholder="例如: 501"
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
+                        <Button variant="secondary" fullWidth onClick={() => setShowEditRentalModal(false)}>
+                            取消
+                        </Button>
+                        <Button fullWidth onClick={handleEditRental}>
+                            確認更新
                         </Button>
                     </div>
                 </div>

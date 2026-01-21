@@ -21,6 +21,8 @@ export const bicycleRentalAPI = {
 
     create: (data) => api.post('/bicycle-rentals', data),
 
+    update: (id, data) => api.patch(`/bicycle-rentals/${id}`, data),
+
     return: (id, returnedBy) => api.patch(`/bicycle-rentals/${id}/return`, { returned_by: returnedBy }),
 };
 
@@ -44,6 +46,8 @@ export const umbrellaRentalAPI = {
     getActive: () => api.get('/umbrella-rentals/active'),
 
     create: (data) => api.post('/umbrella-rentals', data),
+
+    update: (id, data) => api.patch(`/umbrella-rentals/${id}`, data),
 
     return: (id, returnedBy) => api.patch(`/umbrella-rentals/${id}/return`, { returned_by: returnedBy }),
 };
