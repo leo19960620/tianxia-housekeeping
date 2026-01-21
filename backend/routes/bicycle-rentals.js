@@ -184,6 +184,105 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * PATCH /api/bicycle-rentals/:id
+ * 更新租借資訊
+ */
+router.patch('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { bicycle_number, room_number } = req.body;
+
+        // 1. 取得目前的租借紀錄
+        const rentalCheck = await query(
+            'SELECT * FROM bicycle_rentals WHERE id = $1',
+            [id]
+        );
+
+        if (rentalCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: '找不到此租借紀錄'
+            });
+        }
+
+        const currentRental = rentalCheck.rows[0];
+        let newBicycleId = currentRental.bicycle_id;
+
+        // 開始 Transaction
+        await query('BEGIN');
+
+        try {
+            // 2. 如果有更改腳踏車編號
+            if (bicycle_number) {
+                // 找出對應的 bicycle_id
+                const bikeResult = await query(
+                    'SELECT id, status FROM bicycles WHERE bicycle_number = $1',
+                    [bicycle_number]
+                );
+
+                if (bikeResult.rows.length === 0) {
+                    throw new Error(`找不到編號為 ${bicycle_number} 的腳踏車`);
+                }
+
+                const newBike = bikeResult.rows[0];
+
+                // 如果換了車
+                if (newBike.id !== currentRental.bicycle_id) {
+                    // 檢查新車是否可借
+                    if (newBike.status !== 'available') {
+                        throw new Error(`腳踏車 ${bicycle_number} 目前無法租借`);
+                    }
+
+                    // 1. 將舊車設為 available
+                    await query(
+                        "UPDATE bicycles SET status = 'available', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+                        [currentRental.bicycle_id]
+                    );
+
+                    // 2. 將新車設為 rented
+                    await query(
+                        "UPDATE bicycles SET status = 'rented', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+                        [newBike.id]
+                    );
+
+                    newBicycleId = newBike.id;
+                }
+            }
+
+            // 3. 更新租借紀錄
+            const updateResult = await query(
+                `UPDATE bicycle_rentals 
+                 SET bicycle_id = $1, 
+                     room_number = COALESCE($2, room_number),
+                     updated_at = CURRENT_TIMESTAMP 
+                 WHERE id = $3 
+                 RETURNING *`,
+                [newBicycleId, room_number, id]
+            );
+
+            await query('COMMIT');
+
+            res.json({
+                success: true,
+                message: '更新成功',
+                data: updateResult.rows[0]
+            });
+
+        } catch (error) {
+            await query('ROLLBACK');
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('更新租借紀錄錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || '伺服器錯誤'
+        });
+    }
+});
+
+/**
  * PATCH /api/bicycle-rentals/:id/return
  * 歸還腳踏車
  */

@@ -120,6 +120,47 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * PATCH /api/umbrella-rentals/:id
+ * 更新租借資訊
+ */
+router.patch('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { umbrella_number, room_number } = req.body;
+
+        const result = await query(
+            `UPDATE umbrella_rentals 
+             SET umbrella_number = COALESCE($1, umbrella_number), 
+                 room_number = COALESCE($2, room_number),
+                 updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $3 
+             RETURNING *`,
+            [umbrella_number, room_number, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: '找不到此租借紀錄'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: '更新成功',
+            data: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('更新雨傘租借紀錄錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
+/**
  * PATCH /api/umbrella-rentals/:id/return
  * 歸還雨傘
  */
