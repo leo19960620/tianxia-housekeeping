@@ -131,10 +131,12 @@ function HomePage() {
 
     const formatTime = (dateString) => {
         if (!dateString) return '';
+        // 資料庫存 UTC+0，轉換為台北時間（UTC+8）
         const date = new Date(dateString);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes} `;
+        const taipeiTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        const hours = taipeiTime.getUTCHours().toString().padStart(2, '0');
+        const minutes = taipeiTime.getUTCMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
     };
 
     const formatDateRange = (start, end) => {

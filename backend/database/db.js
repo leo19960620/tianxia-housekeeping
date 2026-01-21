@@ -32,6 +32,8 @@ pool.on('error', (err) => {
 export const query = async (text, params) => {
   const start = Date.now();
   try {
+    // 在每次查詢前設定 session 時區為台北
+    await pool.query("SET timezone = 'Asia/Taipei'");
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
     console.log('executed query', { text, duration, rows: res.rowCount });
