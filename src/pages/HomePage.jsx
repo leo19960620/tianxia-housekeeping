@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { announcementAPI } from '../api/announcement';
 import { handoverAPI } from '../api/handover';
 import { handoverItemAPI } from '../api/handoverItem';
+import { bicycleRentalAPI, umbrellaRentalAPI } from '../api/rental';
 import { getTodayMidnight } from '../utils/timezone';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
@@ -14,6 +15,8 @@ function HomePage() {
     const [routineAnnouncements, setRoutineAnnouncements] = useState([]);
     const [todayHandovers, setTodayHandovers] = useState([]);
     const [handoverItems, setHandoverItems] = useState([]);
+    const [activeBicycles, setActiveBicycles] = useState([]);
+    const [activeUmbrellas, setActiveUmbrellas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -38,10 +41,12 @@ function HomePage() {
             const todayMidnight = getTodayMidnight(); // 使用時區工具
 
             // 並行執行所有 API 請求以提升載入速度
-            const [announcementsRes, handoversRes, itemsRes] = await Promise.all([
+            const [announcementsRes, handoversRes, itemsRes, bicyclesRes, umbrellasRes] = await Promise.all([
                 announcementAPI.getAll(),
                 handoverAPI.getAll({ date: todayDate }),
                 handoverItemAPI.getAll(),
+                bicycleRentalAPI.getActive(),
+                umbrellaRentalAPI.getActive(),
             ]);
 
             // 處理公告資料
@@ -115,6 +120,16 @@ function HomePage() {
 
                 setHandoverItems(todayItems);
             }
+
+            // 處理租借中的腳踏車資料
+            if (bicyclesRes.success) {
+                setActiveBicycles(bicyclesRes.data);
+            }
+
+            // 處理租借中的雨傘資料
+            if (umbrellasRes.success) {
+                setActiveUmbrellas(umbrellasRes.data);
+            }
         } catch (error) {
             console.error('載入資料錯誤:', error);
         } finally {
@@ -171,6 +186,37 @@ function HomePage() {
 
     return (
         <div className="home-page">
+            {/* 租借提示橫幅 */}
+            {(activeBicycles.length > 0 || activeUmbrellas.length > 0) && (
+                <div
+                    className="rental-alert-banner"
+                    onClick={() => navigate('/rental-management')}
+                >
+                    <div className="rental-alert-content">
+                        {activeBicycles.length > 0 && (
+                            <div className="rental-alert-item">
+                                <Icon name="bicycle" size={18} />
+                                <span className="rental-alert-text">
+                                    {activeBicycles.length} 台租借中
+                                </span>
+                            </div>
+                        )}
+                        {activeBicycles.length > 0 && activeUmbrellas.length > 0 && (
+                            <span className="rental-alert-divider">|</span>
+                        )}
+                        {activeUmbrellas.length > 0 && (
+                            <div className="rental-alert-item">
+                                <Icon name="umbrella" size={18} />
+                                <span className="rental-alert-text">
+                                    {activeUmbrellas.reduce((sum, u) => sum + (u.quantity || 1), 0)} 把租借中
+                                </span>
+                            </div>
+                        )}
+                        <Icon name="chevron-forward" size={16} className="rental-alert-arrow" />
+                    </div>
+                </div>
+            )}
+
             {/* 今日公告 - 最頂部，無外框 */}
             <div className="announcements-top">
                 <div className="announcements-top-header">
