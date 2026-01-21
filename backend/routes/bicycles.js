@@ -13,11 +13,22 @@ router.get('/', async (req, res) => {
             SELECT 
                 b.*,
                 (SELECT COUNT(*) FROM bicycle_rentals WHERE bicycle_id = b.id AND status = 'active') as is_currently_rented,
-                (SELECT json_build_object(
-                    'last_air_check', MAX(CASE WHEN maintenance_type = 'air_check' THEN maintenance_date END),
-                    'last_cleaning', MAX(CASE WHEN maintenance_type = 'cleaning' THEN maintenance_date END),
-                    'last_appearance_check', MAX(CASE WHEN maintenance_type = 'appearance_check' THEN maintenance_date END)
-                ) FROM bicycle_maintenance WHERE bicycle_id = b.id) as maintenance_info
+                -- 最後一次打氣的日期
+                (SELECT maintenance_date FROM bicycle_maintenance 
+                 WHERE bicycle_id = b.id AND maintenance_type = 'air_check' 
+                 ORDER BY maintenance_date DESC LIMIT 1) as last_air_check_date,
+                -- 最後一次打氣的執行人
+                (SELECT performed_by FROM bicycle_maintenance 
+                 WHERE bicycle_id = b.id AND maintenance_type = 'air_check' 
+                 ORDER BY maintenance_date DESC LIMIT 1) as last_air_check_by,
+                -- 最後一次擦拭的日期
+                (SELECT maintenance_date FROM bicycle_maintenance 
+                 WHERE bicycle_id = b.id AND maintenance_type = 'cleaning' 
+                 ORDER BY maintenance_date DESC LIMIT 1) as last_cleaning_date,
+                -- 最後一次擦拭的執行人
+                (SELECT performed_by FROM bicycle_maintenance 
+                 WHERE bicycle_id = b.id AND maintenance_type = 'cleaning' 
+                 ORDER BY maintenance_date DESC LIMIT 1) as last_cleaning_by
             FROM bicycles b
             ORDER BY CAST(b.bicycle_number AS INTEGER)
         `;
