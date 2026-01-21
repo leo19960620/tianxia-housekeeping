@@ -59,8 +59,8 @@ router.get('/', async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { content } = req.body;
-        const userId = req.user.id; // 從 token 取得使用者 ID
+        const { content, created_by } = req.body;
+        const userId = created_by || req.user.id; // 優先使用傳入的 created_by，否則使用 token 中的 ID
 
         if (!content) {
             return res.status(400).json({
