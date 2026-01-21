@@ -82,23 +82,23 @@ router.get('/active', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const { umbrella_number, room_number, room_status, rented_by, notes } = req.body;
+        const { quantity, room_number, room_status, rented_by, notes } = req.body;
 
-        if (!umbrella_number || !rented_by) {
+        if (!rented_by) {
             return res.status(400).json({
                 success: false,
-                message: '請提供雨傘編號和經手人'
+                message: '請提供經手人'
             });
         }
 
         const insertSql = `
             INSERT INTO umbrella_rentals 
-            (umbrella_number, room_number, room_status, rented_by, notes) 
+            (quantity, room_number, room_status, rented_by, notes) 
             VALUES ($1, $2, $3, $4, $5) 
             RETURNING *
         `;
         const result = await query(insertSql, [
-            umbrella_number,
+            quantity || 1, // 預設數量為 1
             room_number,
             room_status,
             rented_by,
@@ -126,16 +126,16 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { umbrella_number, room_number } = req.body;
+        const { quantity, room_number } = req.body;
 
         const result = await query(
             `UPDATE umbrella_rentals 
-             SET umbrella_number = COALESCE($1, umbrella_number), 
+             SET quantity = COALESCE($1, quantity), 
                  room_number = COALESCE($2, room_number),
                  updated_at = CURRENT_TIMESTAMP 
              WHERE id = $3 
              RETURNING *`,
-            [umbrella_number, room_number, id]
+            [quantity, room_number, id]
         );
 
         if (result.rows.length === 0) {
