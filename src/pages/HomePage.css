@@ -16,50 +16,83 @@
 }
 
 /* 租借提示橫幅 */
+/* 租借提示橫幅 */
 .rental-alert-banner {
-    background: linear-gradient(135deg, #E5E0D7 0%, #D4CDC0 100%);
-    border: 1px solid #A69E95;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    background: #F5F5F0;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
     cursor: pointer;
     transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* 輕微懸浮陰影 */
+    position: relative;
+    overflow: hidden;
 }
 
 .rental-alert-banner:hover {
-    background: linear-gradient(135deg, #D4CDC0 0%, #C8C3BB 100%);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    background: #EFEFE8;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    /* hover 時加深陰影 */
+    transform: translateY(-2px);
 }
 
 .rental-alert-content {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    color: #5C5854;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    justify-content: space-between;
+    width: 100%;
+}
+
+.rental-status-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    /* 增加間距 */
+    flex: 1;
+}
+
+/* 如果同時有兩個項目，可以使用 spacer 或讓它們分散 */
+.rental-spacer {
+    width: 1px;
+    height: 16px;
+    background: #2D4A3E;
+    opacity: 0.1;
+    margin: 0 var(--spacing-md);
 }
 
 .rental-alert-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
+    color: #2D4A3E;
 }
 
 .rental-alert-text {
-    white-space: nowrap;
+    font-size: var(--font-size-base);
+    color: #2D4A3E;
+    font-weight: 400;
+    /* Regular */
+    letter-spacing: 0.02em;
 }
 
-.rental-alert-divider {
-    color: #8B7E74;
-    opacity: 0.6;
+.rental-alert-text strong {
+    font-weight: 700;
+    /* Bold 用於數字 */
+    font-size: 1.1em;
+    margin-right: 2px;
 }
 
 .rental-alert-arrow {
-    margin-left: auto;
-    color: #5C5854;
-    opacity: 0.7;
+    color: #2D4A3E;
+    opacity: 0.5;
+    transition: transform 0.2s ease;
+}
+
+.rental-alert-banner:hover .rental-alert-arrow {
+    transform: translateX(4px);
+    opacity: 0.8;
 }
 
 /* 今日公告 - 最頂部 */
@@ -377,6 +410,32 @@
 .handover-item-user-name {
     color: var(--color-text);
 }
+
+/* 班別標籤（用於近期交接事項） */
+.handover-shift-badge {
+    display: inline-block;
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    margin-right: var(--spacing-sm);
+}
+
+/* 備註預覽（用於近期交接事項） */
+.handover-notes-preview {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin-top: var(--spacing-xs);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 
 /* 今日當班卡片 - 參考截圖樣式 */
 .today-shifts-list {

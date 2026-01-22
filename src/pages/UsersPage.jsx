@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
+import Icon from '../components/common/Icon';
+import '../styles/ModernTable.css';
 import Modal from '../components/common/Modal';
 import './UsersPage.css';
 
@@ -79,8 +81,8 @@ function UsersPage() {
                     <Button onClick={() => setShowModal(true)}>+ 新增使用者</Button>
                 </div>
 
-                <div className="users-page-table-container">
-                    <table className="data-table">
+                <div className="modern-table-container">
+                    <table className="modern-table">
                         <thead>
                             <tr>
                                 <th style={{ width: '60px' }}></th>
@@ -108,21 +110,24 @@ function UsersPage() {
                                         <td>
                                             <span className="user-id-badge">#{user.id}</span>
                                         </td>
-                                        <td className="action-cell">
-                                            <Button
-                                                variant="danger"
-                                                size="sm"
+                                        <td className="action-cell" style={{ textAlign: 'right' }}>
+                                            <button
+                                                className="action-btn delete"
                                                 onClick={() => handleDelete(user.id)}
-                                                style={{ minWidth: 'auto', padding: '4px 12px' }}
+                                                style={{ display: 'inline-flex' }}
                                             >
+                                                <Icon name="trash" size={14} />
                                                 刪除
-                                            </Button>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
+                    <div className="table-footer">
+                        <span className="table-stats">共 {users.length} 筆紀錄</span>
+                    </div>
                 </div>
             </div>
 

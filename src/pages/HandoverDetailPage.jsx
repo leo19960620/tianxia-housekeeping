@@ -20,7 +20,6 @@ function HandoverDetailPage() {
     // Modal 狀態
     const [showInventoryModal, setShowInventoryModal] = useState(false);
     const [showOzoneModal, setShowOzoneModal] = useState(false);
-    const [showHandoverItemModal, setShowHandoverItemModal] = useState(false);
     const [showFloorSelector, setShowFloorSelector] = useState(false);
     const [floorSelectorTarget, setFloorSelectorTarget] = useState('OZONE'); // 'OZONE' or 'INVENTORY'
 
@@ -44,8 +43,7 @@ function HandoverDetailPage() {
         notes: '',
     });
 
-    // 交班事項
-    const [handoverItemContent, setHandoverItemContent] = useState('');
+
 
     // 編輯模式相關
     const [editMode, setEditMode] = useState(false);
@@ -330,31 +328,7 @@ function HandoverDetailPage() {
         }
     };
 
-    // === 交班事項相關 ===
-    const openHandoverItemModal = () => {
-        setHandoverItemContent('');
-        setShowHandoverItemModal(true);
-    };
 
-    const confirmHandoverItem = async () => {
-        if (!handoverItemContent.trim()) {
-            alert('請輸入交班事項內容');
-            return;
-        }
-
-        try {
-            await handoverAPI.addHandoverItem(id, {
-                content: handoverItemContent,
-            });
-
-            alert('交班事項已新增');
-            setShowHandoverItemModal(false);
-            loadData();
-        } catch (error) {
-            console.error('新增交班事項錯誤:', error);
-            alert(error.message || '新增失敗');
-        }
-    };
 
     // 取得樓層的房號列表
     const getRoomsForFloor = (floor) => {
@@ -611,13 +585,15 @@ function HandoverDetailPage() {
                                                                 {new Date(record.start_time).toLocaleTimeString('zh-TW', {
                                                                     hour: '2-digit',
                                                                     minute: '2-digit',
+                                                                    hour12: false
                                                                 })}
                                                                 {endTime && (
                                                                     <>
-                                                                        {' → '}
+                                                                        {' - '}
                                                                         {endTime.toLocaleTimeString('zh-TW', {
                                                                             hour: '2-digit',
                                                                             minute: '2-digit',
+                                                                            hour12: false
                                                                         })}
                                                                     </>
                                                                 )}
@@ -647,37 +623,6 @@ function HandoverDetailPage() {
                                         </div>
                                     );
                                 })
-                            )}
-                        </div>
-
-                        {/* 交班事項 (移到這裡) */}
-                        <div className="detail-section">
-                            <div className="detail-section-header">
-                                <h2 className="detail-section-title">
-                                    <Icon name="document-text-outline" size={20} />
-                                    交班事項
-                                </h2>
-                                <Button size="sm" onClick={openHandoverItemModal}>
-                                    <Icon name="add-outline" size={16} />
-                                    新增
-                                </Button>
-                            </div>
-
-                            {handover.handover_items?.length === 0 ? (
-                                <div className="empty-state">
-                                    <p>尚無交班事項</p>
-                                </div>
-                            ) : (
-                                handover.handover_items?.map((item, idx) => (
-                                    <div key={idx} className="handover-item-card">
-                                        <div className="item-content">{item.item_content}</div>
-                                        {item.is_resolved && (
-                                            <div style={{ marginTop: 'var(--spacing-xs)', fontSize: 'var(--font-size-sm)', color: 'var(--color-success)' }}>
-                                                ✓ 已解決
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
                             )}
                         </div>
                     </div>
@@ -1083,7 +1028,7 @@ function HandoverDetailPage() {
                 }}
                 onClose={() => setShowUserPicker(false)}
             />
-        </div>
+        </div >
     );
 }
 

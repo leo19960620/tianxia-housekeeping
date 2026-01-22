@@ -4,7 +4,11 @@ import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
+import RentalManagementSkeleton from './RentalManagementSkeleton';
+import '../styles/ModernTable.css';
 import './RentalManagementPage.css';
+
+
 
 function RentalManagementPage() {
     const [activeTab, setActiveTab] = useState('bicycle-rental'); // bicycle-rental, bicycle-maintenance, umbrella-rental, rental-history
@@ -20,6 +24,19 @@ function RentalManagementPage() {
         const day = String(today.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     });
+    const [dateRangeStart, setDateRangeStart] = useState(() => {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        return firstDay.toISOString().split('T')[0];
+    });
+    const [dateRangeEnd, setDateRangeEnd] = useState(() => {
+        const today = new Date();
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return lastDay.toISOString().split('T')[0];
+    });
+    const [filterItemType, setFilterItemType] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showReturnModal, setShowReturnModal] = useState(false);
@@ -34,7 +51,7 @@ function RentalManagementPage() {
     const [selectedBicyclesForBatch, setSelectedBicyclesForBatch] = useState([]);
     const [editRentalForm, setEditRentalForm] = useState({
         bicycle_number: '',
-        umbrella_number: '',
+        quantity: 1,
         room_number: ''
     });
 
@@ -49,7 +66,7 @@ function RentalManagementPage() {
 
     // 雨傘租借表單
     const [umbrellaRentalForm, setUmbrellaRentalForm] = useState({
-        umbrella_number: '',
+        quantity: 1,
         room_number: '',
         room_status: 'checked_in',
         rented_by: '',
@@ -102,19 +119,15 @@ function RentalManagementPage() {
             }
 
             if (activeTab === 'rental-history') {
-                console.log('[租借紀錄] 查詢日期:', selectedDate);
                 const [bicycleHistoryRes, umbrellaHistoryRes] = await Promise.all([
-                    bicycleRentalAPI.getAll({ date: selectedDate }),
-                    umbrellaRentalAPI.getAll({ date: selectedDate })
+                    bicycleRentalAPI.getAll(),
+                    umbrellaRentalAPI.getAll()
                 ]);
-                console.log('[租借紀錄] 腳踏車 API 回應:', bicycleHistoryRes);
-                console.log('[租借紀錄] 雨傘 API 回應:', umbrellaHistoryRes);
                 if (bicycleHistoryRes.success && umbrellaHistoryRes.success) {
                     const combined = [
                         ...bicycleHistoryRes.data.map(r => ({ ...r, type: 'bicycle' })),
                         ...umbrellaHistoryRes.data.map(r => ({ ...r, type: 'umbrella' }))
                     ].sort((a, b) => new Date(b.rental_start_time) - new Date(a.rental_start_time));
-                    console.log('[租借紀錄] 合併後資料:', combined);
                     setRentalHistory(combined);
                 }
             }
@@ -156,8 +169,8 @@ function RentalManagementPage() {
 
     // 雨傘租借
     const handleUmbrellaRental = async () => {
-        if (!umbrellaRentalForm.umbrella_number || !umbrellaRentalForm.rented_by) {
-            alert('請填寫雨傘編號和經手人');
+        if (!umbrellaRentalForm.quantity || !umbrellaRentalForm.rented_by) {
+            alert('請確認數量和經手人');
             return;
         }
 
@@ -165,7 +178,7 @@ function RentalManagementPage() {
             await umbrellaRentalAPI.create(umbrellaRentalForm);
             alert('借出成功');
             setUmbrellaRentalForm({
-                umbrella_number: '',
+                quantity: 1,
                 room_number: '',
                 room_status: 'checked_in',
                 rented_by: '',
@@ -241,7 +254,7 @@ function RentalManagementPage() {
         setSelectedItem({ ...item, type });
         setEditRentalForm({
             bicycle_number: type === 'bicycle' ? item.bicycle_number : '',
-            umbrella_number: type === 'umbrella' ? item.umbrella_number : '',
+            quantity: type === 'umbrella' ? (item.quantity || 1) : 1,
             room_number: item.room_number || ''
         });
         setShowEditRentalModal(true);
@@ -258,13 +271,13 @@ function RentalManagementPage() {
                 updateData.bicycle_number = editRentalForm.bicycle_number;
                 await bicycleRentalAPI.update(selectedItem.id, updateData);
             } else {
-                updateData.umbrella_number = editRentalForm.umbrella_number;
+                updateData.quantity = parseInt(editRentalForm.quantity) || 1;
                 await umbrellaRentalAPI.update(selectedItem.id, updateData);
             }
 
             alert('更新成功');
             setShowEditRentalModal(false);
-            setEditRentalForm({ bicycle_number: '', umbrella_number: '', room_number: '' });
+            setEditRentalForm({ bicycle_number: '', quantity: 1, room_number: '' });
             loadData();
         } catch (error) {
             alert(error.message || '更新失敗');
@@ -394,10 +407,10 @@ function RentalManagementPage() {
 
     if (loading) {
         return (
-            <div className="page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
+            <div className="page rental-management-page">
+                <div className="page-content">
+                    <h1 className="page-title">租借管理</h1>
+                    <RentalManagementSkeleton />
                 </div>
             </div>
         );
@@ -405,7 +418,7 @@ function RentalManagementPage() {
 
     return (
         <div className="page rental-management-page">
-            <div className="page-content">
+            <div className="page-content fade-in">
                 <h1 className="page-title">租借管理</h1>
 
                 {/* 頁籤 */}
@@ -444,37 +457,39 @@ function RentalManagementPage() {
                 {activeTab === 'bicycle-rental' && (
                     <div className="rental-content">
                         {/* 快速借出表單 */}
-                        <div className="rental-form-card">
-                            <h3>快速借出</h3>
+                        <div className="rental-form-card modern-form-card">
+                            <h3 className="form-card-title">
+                                <span className="title-bar"></span>
+                                快速借出
+                            </h3>
                             <div className="form-group">
-                                <label>選擇腳踏車 * (可複選)</label>
-                                <div className="bicycle-checkboxes">
+                                <label>選擇腳踏車號碼 *</label>
+                                <div className="bicycle-button-group">
                                     {bicycles.filter(b => b.status === 'available').map(bicycle => (
-                                        <label key={bicycle.id} className="checkbox-item">
-                                            <input
-                                                type="checkbox"
-                                                checked={bicycleRentalForm.bicycle_ids.includes(bicycle.id)}
-                                                onChange={(e) => {
-                                                    const newIds = e.target.checked
-                                                        ? [...bicycleRentalForm.bicycle_ids, bicycle.id]
-                                                        : bicycleRentalForm.bicycle_ids.filter(id => id !== bicycle.id);
-                                                    setBicycleRentalForm({ ...bicycleRentalForm, bicycle_ids: newIds });
-                                                }}
-                                            />
-                                            <span>{bicycle.bicycle_number} 號 - {bicycle.appearance_condition}</span>
-                                        </label>
+                                        <button
+                                            key={bicycle.id}
+                                            type="button"
+                                            className={`bicycle-number-btn ${bicycleRentalForm.bicycle_ids.includes(bicycle.id) ? 'selected' : ''}`}
+                                            onClick={() => {
+                                                const newIds = bicycleRentalForm.bicycle_ids.includes(bicycle.id)
+                                                    ? bicycleRentalForm.bicycle_ids.filter(id => id !== bicycle.id)
+                                                    : [...bicycleRentalForm.bicycle_ids, bicycle.id];
+                                                setBicycleRentalForm({ ...bicycleRentalForm, bicycle_ids: newIds });
+                                            }}
+                                        >
+                                            #{bicycle.bicycle_number}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                             <div className="form-grid">
-
                                 <div className="form-group">
-                                    <label>房號</label>
+                                    <label>房號 (例如: 501)</label>
                                     <input
                                         type="text"
                                         value={bicycleRentalForm.room_number}
                                         onChange={(e) => setBicycleRentalForm({ ...bicycleRentalForm, room_number: e.target.value })}
-                                        placeholder="例如: 501"
+                                        placeholder="808"
                                         className="form-input"
                                     />
                                 </div>
@@ -499,7 +514,7 @@ function RentalManagementPage() {
                                         onChange={(e) => setBicycleRentalForm({ ...bicycleRentalForm, rented_by: e.target.value })}
                                         className="form-select"
                                     >
-                                        <option value="">請選擇經手人</option>
+                                        <option value="">Carol</option>
                                         {users.map(user => (
                                             <option key={user.id} value={user.full_name}>
                                                 {user.full_name}
@@ -508,18 +523,21 @@ function RentalManagementPage() {
                                     </select>
                                 </div>
 
-                                <div className="form-group full-width">
-                                    <label>備註</label>
+                                <div className="form-group">
+                                    <label>備註 (選填)</label>
                                     <input
                                         type="text"
                                         value={bicycleRentalForm.notes}
                                         onChange={(e) => setBicycleRentalForm({ ...bicycleRentalForm, notes: e.target.value })}
-                                        placeholder="選填"
+                                        placeholder="備註 (選填)"
                                         className="form-input"
                                     />
                                 </div>
                             </div>
-                            <Button onClick={handleBicycleRental} fullWidth>借出</Button>
+                            <button className="confirm-rental-btn" onClick={handleBicycleRental}>
+                                <Icon name="bicycle" size={20} />
+                                確認借出
+                            </button>
                         </div>
 
                         {/* 目前租借中 */}
@@ -530,28 +548,29 @@ function RentalManagementPage() {
                             ) : (
                                 <div className="rental-cards">
                                     {bicycleRentals.map(rental => (
-                                        <div key={rental.id} className="rental-card">
+                                        <div key={rental.id} className="rental-card modern-rental-card">
                                             <div className="rental-card-header">
                                                 <div className="rental-card-title">
-                                                    <Icon name="bicycle" size={24} color="var(--color-primary)" />
+                                                    <div className="icon-wrapper">
+                                                        <Icon name="bicycle" size={20} color="var(--color-primary)" />
+                                                    </div>
                                                     <span>{rental.bicycle_number} 號</span>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="small"
+                                                <div className="rental-card-actions">
+                                                    <button
+                                                        className="icon-btn edit-btn"
                                                         onClick={() => openEditRentalModal(rental, 'bicycle')}
+                                                        title="編輯"
                                                     >
-                                                        <Icon name="create" size={16} />
-                                                        編輯
-                                                    </Button>
-                                                    <Button
-                                                        variant="success"
-                                                        size="small"
+                                                        <Icon name="create" size={18} />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn return-btn"
                                                         onClick={() => openReturnModal(rental, 'bicycle')}
+                                                        title="歸還"
                                                     >
-                                                        歸還
-                                                    </Button>
+                                                        <Icon name="checkmark-circle" size={18} />
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div className="rental-card-body">
@@ -585,14 +604,14 @@ function RentalManagementPage() {
                 {/* 腳踏車維護頁籤 */}
                 {activeTab === 'bicycle-maintenance' && (
                     <div className="rental-content">
-                        {/* 批次維護按鈕 */}
-                        <Button
+                        {/* 批次維護按鈕 - 全寬深綠色 */}
+                        <button
+                            className="batch-maintenance-banner"
                             onClick={() => setShowBatchMaintenanceModal(true)}
-                            style={{ marginBottom: '16px' }}
                         >
                             <Icon name="checkmark-done" size={20} />
                             批次維護
-                        </Button>
+                        </button>
 
                         <div className="maintenance-grid">
                             {bicycles.map(bicycle => {
@@ -600,11 +619,14 @@ function RentalManagementPage() {
                                 const needsAirCheck = shouldRemindAirCheck(bicycle.last_air_check_date);
 
                                 return (
-                                    <div key={bicycle.id} className={`bicycle-card ${bicycle.status === 'maintenance' ? 'maintenance' : ''} ${bicycle.is_active === false ? 'inactive' : ''}`}>
-                                        <div className="bicycle-card-header">
-                                            <div className="bicycle-number">{bicycle.bicycle_number} 號</div>
-                                            <div className="bicycle-header-right">
-                                                <div className={`bicycle-status status-${bicycle.status}`}>
+                                    <div key={bicycle.id} className={`bicycle-maintenance-card ${bicycle.is_active === false ? 'inactive' : ''}`}>
+                                        <div className="bicycle-maintenance-header">
+                                            <div className="bicycle-maintenance-title">
+                                                <Icon name="bicycle" size={24} />
+                                                <span className="bicycle-maintenance-number">{bicycle.bicycle_number} 號</span>
+                                            </div>
+                                            <div className="bicycle-maintenance-controls">
+                                                <div className={`bicycle-maintenance-status ${bicycle.status === 'rented' ? 'rented' : bicycle.status === 'available' ? 'available' : 'maintenance'}`}>
                                                     {bicycle.status === 'available' ? '可借' : bicycle.status === 'rented' ? '已借出' : '維護中'}
                                                 </div>
                                                 <label className="switch" title={bicycle.status === 'rented' ? '已借出無法切換' : '切換開啟/關閉'}>
@@ -618,54 +640,40 @@ function RentalManagementPage() {
                                                 </label>
                                             </div>
                                         </div>
-                                        <div className="bicycle-card-body">
-                                            <div className="maintenance-item">
-                                                <Icon name={needsAirCheck ? "warning" : "checkmark-circle"}
-                                                    size={18}
-                                                    color={needsAirCheck ? "var(--color-warning)" : "var(--color-success)"} />
-                                                <div>
-                                                    <div className="maintenance-label">上次打氣</div>
-                                                    <div className="maintenance-value">
-                                                        {formatDate(bicycle.last_air_check_date)}
-                                                        {bicycle.last_air_check_by && ` ・ ${bicycle.last_air_check_by}`}
-                                                    </div>
-                                                    {needsAirCheck && <div className="maintenance-reminder">⚠️ 建議打氣</div>}
-                                                </div>
+                                        <div className="bicycle-maintenance-body">
+                                            <div className="maintenance-info-row">
+                                                <Icon name="fitness" size={16} />
+                                                <span className="maintenance-info-text">
+                                                    上次打氣：{formatDate(bicycle.last_air_check_date)} · {bicycle.last_air_check_by || '-'}
+                                                </span>
                                             </div>
-                                            <div className="maintenance-item">
-                                                <Icon name="water" size={18} color="var(--color-info)" />
-                                                <div>
-                                                    <div className="maintenance-label">上次擦拭</div>
-                                                    <div className="maintenance-value">
-                                                        {formatDate(bicycle.last_cleaning_date)}
-                                                        {bicycle.last_cleaning_by && ` ・ ${bicycle.last_cleaning_by}`}
-                                                    </div>
-                                                </div>
+                                            <div className="maintenance-info-row">
+                                                <Icon name="water" size={16} />
+                                                <span className="maintenance-info-text">
+                                                    上次擦拭：{formatDate(bicycle.last_cleaning_date)} · {bicycle.last_cleaning_by || '-'}
+                                                </span>
                                             </div>
-                                            <div className="maintenance-item">
-                                                <Icon name="eye" size={18} color="var(--color-secondary)" />
-                                                <div>
-                                                    <div className="maintenance-label">外觀狀況</div>
-                                                    <div className="maintenance-value">{bicycle.appearance_condition || '-'}</div>
-                                                </div>
+                                            <div className="maintenance-info-row">
+                                                <Icon name="eye" size={16} />
+                                                <span className="maintenance-info-text">
+                                                    外觀狀況：{bicycle.appearance_condition || '-'}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                            <Button
-                                                variant="secondary"
-                                                fullWidth
+                                        <div className="bicycle-maintenance-actions">
+                                            <button
+                                                className="maintenance-action-btn start-maintenance"
                                                 onClick={() => openMaintenanceModal(bicycle)}
                                                 disabled={bicycle.status === 'rented'}
                                             >
                                                 開始維護
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                fullWidth
+                                            </button>
+                                            <button
+                                                className="maintenance-action-btn view-records"
                                                 onClick={() => openMaintenanceHistoryModal(bicycle)}
                                             >
                                                 維護紀錄
-                                            </Button>
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -678,27 +686,53 @@ function RentalManagementPage() {
                 {activeTab === 'umbrella-rental' && (
                     <div className="rental-content">
                         {/* 快速借出表單 */}
-                        <div className="rental-form-card">
-                            <h3>快速借出</h3>
+                        <div className="rental-form-card modern-form-card">
+                            <h3 className="form-card-title">
+                                <span className="title-bar"></span>
+                                快速借出
+                            </h3>
                             <div className="form-grid">
                                 <div className="form-group">
-                                    <label>雨傘編號 *</label>
-                                    <input
-                                        type="text"
-                                        value={umbrellaRentalForm.umbrella_number}
-                                        onChange={(e) => setUmbrellaRentalForm({ ...umbrellaRentalForm, umbrella_number: e.target.value })}
-                                        placeholder="請輸入雨傘編號"
-                                        className="form-input"
-                                    />
+                                    <label>借出數量 *</label>
+                                    <div className="quantity-selector">
+                                        <button
+                                            className="quantity-btn"
+                                            onClick={() => setUmbrellaRentalForm(prev => ({
+                                                ...prev,
+                                                quantity: Math.max(1, (prev.quantity || 1) - 1)
+                                            }))}
+                                        >
+                                            <Icon name="remove" size={16} />
+                                        </button>
+                                        <input
+                                            type="number"
+                                            value={umbrellaRentalForm.quantity || 1}
+                                            onChange={(e) => setUmbrellaRentalForm({
+                                                ...umbrellaRentalForm,
+                                                quantity: Math.max(1, parseInt(e.target.value) || 1)
+                                            })}
+                                            className="quantity-input"
+                                            min="1"
+                                        />
+                                        <button
+                                            className="quantity-btn"
+                                            onClick={() => setUmbrellaRentalForm(prev => ({
+                                                ...prev,
+                                                quantity: (prev.quantity || 1) + 1
+                                            }))}
+                                        >
+                                            <Icon name="add" size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="form-group">
-                                    <label>房號</label>
+                                    <label>房號 (例如: 501)</label>
                                     <input
                                         type="text"
                                         value={umbrellaRentalForm.room_number}
                                         onChange={(e) => setUmbrellaRentalForm({ ...umbrellaRentalForm, room_number: e.target.value })}
-                                        placeholder="例如: 501"
+                                        placeholder="808"
                                         className="form-input"
                                     />
                                 </div>
@@ -732,18 +766,21 @@ function RentalManagementPage() {
                                     </select>
                                 </div>
 
-                                <div className="form-group full-width">
-                                    <label>備註</label>
+                                <div className="form-group">
+                                    <label>備註 (選填)</label>
                                     <input
                                         type="text"
                                         value={umbrellaRentalForm.notes}
                                         onChange={(e) => setUmbrellaRentalForm({ ...umbrellaRentalForm, notes: e.target.value })}
-                                        placeholder="選填"
+                                        placeholder="備註 (選填)"
                                         className="form-input"
                                     />
                                 </div>
                             </div>
-                            <Button onClick={handleUmbrellaRental} fullWidth>借出</Button>
+                            <button className="confirm-rental-btn" onClick={handleUmbrellaRental}>
+                                <Icon name="umbrella" size={20} />
+                                確認借出
+                            </button>
                         </div>
 
                         {/* 目前租借中 */}
@@ -754,28 +791,29 @@ function RentalManagementPage() {
                             ) : (
                                 <div className="rental-cards">
                                     {umbrellaRentals.map(rental => (
-                                        <div key={rental.id} className="rental-card">
+                                        <div key={rental.id} className="rental-card modern-rental-card">
                                             <div className="rental-card-header">
                                                 <div className="rental-card-title">
-                                                    <Icon name="umbrella" size={24} color="var(--color-info)" />
-                                                    <span>{rental.umbrella_number}</span>
+                                                    <div className="icon-wrapper">
+                                                        <Icon name="umbrella" size={20} color="var(--color-info)" />
+                                                    </div>
+                                                    <span>{rental.quantity} 把</span>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="small"
+                                                <div className="rental-card-actions">
+                                                    <button
+                                                        className="icon-btn edit-btn"
                                                         onClick={() => openEditRentalModal(rental, 'umbrella')}
+                                                        title="編輯"
                                                     >
-                                                        <Icon name="create" size={16} />
-                                                        編輯
-                                                    </Button>
-                                                    <Button
-                                                        variant="success"
-                                                        size="small"
+                                                        <Icon name="create" size={18} />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn return-btn"
                                                         onClick={() => openReturnModal(rental, 'umbrella')}
+                                                        title="歸還"
                                                     >
-                                                        歸還
-                                                    </Button>
+                                                        <Icon name="checkmark-circle" size={18} />
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div className="rental-card-body">
@@ -805,88 +843,239 @@ function RentalManagementPage() {
                         </div>
                     </div>
                 )}
+
             </div>
 
             {/* 租借紀錄頁籤 */}
-            {activeTab === 'rental-history' && (
-                <div className="rental-content">
-                    <div className="rental-list-section">
-                        <div className="rental-history-header">
-                            <h3>租借紀錄</h3>
-                            <div className="date-picker-container">
-                                <label htmlFor="rental-date">查詢日期：</label>
-                                <input
-                                    id="rental-date"
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="date-picker"
-                                />
+            {
+                activeTab === 'rental-history' && (
+                    <div className="rental-content">
+                        {/* 篩選區域 */}
+                        <div className="rental-history-filters">
+                            {/* 日期範圍 */}
+                            <div className="filter-group">
+                                <label>日期</label>
+                                <div className="date-range-inputs">
+                                    <input
+                                        type="date"
+                                        value={dateRangeStart}
+                                        onChange={(e) => setDateRangeStart(e.target.value)}
+                                        className="date-input"
+                                    />
+                                    <span>-</span>
+                                    <input
+                                        type="date"
+                                        value={dateRangeEnd}
+                                        onChange={(e) => setDateRangeEnd(e.target.value)}
+                                        className="date-input"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 物品類型 */}
+                            <div className="filter-group">
+                                <label>物品類型</label>
+                                <div className="filter-tabs">
+                                    <button
+                                        className={`filter-tab ${filterItemType === '' ? 'active' : ''}`}
+                                        onClick={() => setFilterItemType('')}
+                                    >
+                                        全部
+                                    </button>
+                                    <button
+                                        className={`filter-tab ${filterItemType === 'bicycle' ? 'active' : ''}`}
+                                        onClick={() => setFilterItemType('bicycle')}
+                                    >
+                                        腳踏車
+                                    </button>
+                                    <button
+                                        className={`filter-tab ${filterItemType === 'umbrella' ? 'active' : ''}`}
+                                        onClick={() => setFilterItemType('umbrella')}
+                                    >
+                                        雨傘
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 狀態 */}
+                            <div className="filter-group">
+                                <label>狀態</label>
+                                <div className="filter-tabs">
+                                    <button
+                                        className={`filter-tab ${filterStatus === '' ? 'active' : ''}`}
+                                        onClick={() => setFilterStatus('')}
+                                    >
+                                        全部
+                                    </button>
+                                    <button
+                                        className={`filter-tab ${filterStatus === 'returned' ? 'active' : ''}`}
+                                        onClick={() => setFilterStatus('returned')}
+                                    >
+                                        退還
+                                    </button>
+                                    <button
+                                        className={`filter-tab ${filterStatus === 'active' ? 'active' : ''}`}
+                                        onClick={() => setFilterStatus('active')}
+                                    >
+                                        借出
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 搜索 */}
+                            <div className="filter-group">
+                                <label>搜索</label>
+                                <div className="search-input-wrapper">
+                                    <input
+                                        type="text"
+                                        placeholder="搜尋編號、房號或姓名"
+                                        className="search-input"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                    <Icon name="search" size={20} className="search-icon" />
+                                </div>
                             </div>
                         </div>
-                        <p className="rental-count">共 {rentalHistory.length} 筆記錄</p>
-                        {rentalHistory.length === 0 ? (
-                            <p className="empty-message">目前無租借紀錄</p>
-                        ) : (
-                            <div className="rental-cards">
-                                {rentalHistory.map(rental => (
-                                    <div key={`${rental.type}-${rental.id}`} className="rental-card">
-                                        <div className="rental-card-header">
-                                            <div className="rental-card-title">
-                                                <Icon
-                                                    name={rental.type === 'bicycle' ? 'bicycle' : 'umbrella'}
-                                                    size={24}
-                                                    color={rental.type === 'bicycle' ? 'var(--color-primary)' : 'var(--color-info)'}
-                                                />
-                                                <span>
+
+                        {/* 表格 */}
+                        <div className="modern-table-container">
+                            <table className="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>編號</th>
+                                        <th>物品</th>
+                                        <th>房號</th>
+                                        <th>借出人</th>
+                                        <th>借出時間</th>
+                                        <th>歸還時間</th>
+                                        <th>經手人</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(() => {
+                                        // 篩選邏輯
+                                        let filtered = rentalHistory;
+
+                                        // 日期範圍篩選
+                                        if (dateRangeStart || dateRangeEnd) {
+                                            filtered = filtered.filter(rental => {
+                                                const rentalDate = new Date(rental.rental_start_time);
+                                                const start = dateRangeStart ? new Date(dateRangeStart) : null;
+                                                const end = dateRangeEnd ? new Date(dateRangeEnd + 'T23:59:59') : null;
+
+                                                if (start && rentalDate < start) return false;
+                                                if (end && rentalDate > end) return false;
+                                                return true;
+                                            });
+                                        }
+
+                                        // 物品類型篩選
+                                        if (filterItemType) {
+                                            filtered = filtered.filter(rental => rental.type === filterItemType);
+                                        }
+
+                                        // 狀態篩選
+                                        if (filterStatus) {
+                                            filtered = filtered.filter(rental => rental.status === filterStatus);
+                                        }
+
+                                        // 搜索篩選
+                                        if (searchQuery) {
+                                            const query = searchQuery.toLowerCase();
+                                            filtered = filtered.filter(rental => {
+                                                const number = rental.type === 'bicycle' ? rental.bicycle_number : rental.quantity?.toString();
+                                                const room = rental.room_number || '';
+                                                const rentedBy = rental.rented_by || '';
+                                                const returnedBy = rental.returned_by || '';
+
+                                                return (
+                                                    number?.toLowerCase().includes(query) ||
+                                                    room.toLowerCase().includes(query) ||
+                                                    rentedBy.toLowerCase().includes(query) ||
+                                                    returnedBy.toLowerCase().includes(query)
+                                                );
+                                            });
+                                        }
+
+                                        // 渲染結果
+                                        if (filtered.length === 0) {
+                                            return (
+                                                <tr>
+                                                    <td colSpan="7" style={{ textAlign: 'center', padding: '24px' }}>目前無租借紀錄</td>
+                                                </tr>
+                                            );
+                                        }
+
+                                        return filtered.map((rental, index) => (
+                                            <tr key={`${rental.type}-${rental.id}`}>
+                                                <td>{index + 1}號</td>
+                                                <td>
                                                     {rental.type === 'bicycle'
-                                                        ? `${rental.bicycle_number} 號`
-                                                        : rental.umbrella_number}
-                                                </span>
-                                            </div>
-                                            <div className={`status-badge status-${rental.status}`}>
-                                                {rental.status === 'active' ? '租借中' : '已歸還'}
-                                            </div>
-                                        </div>
-                                        <div className="rental-card-body">
-                                            <div className="rental-info-row">
-                                                <Icon name="home" size={16} />
-                                                <span>房號: {rental.room_number || '未登記'}</span>
-                                            </div>
-                                            <div className="rental-info-row">
-                                                <Icon name="log-in" size={16} />
-                                                <span>借出: {formatDateTime(rental.rental_start_time)}</span>
-                                            </div>
-                                            <div className="rental-info-row">
-                                                <Icon name="person" size={16} />
-                                                <span>借出經手人: {rental.rented_by}</span>
-                                            </div>
-                                            {rental.rental_end_time && (
-                                                <div className="rental-info-row">
-                                                    <Icon name="log-out" size={16} />
-                                                    <span>歸還: {formatDateTime(rental.rental_end_time)}</span>
-                                                </div>
-                                            )}
-                                            {rental.returned_by && (
-                                                <div className="rental-info-row">
-                                                    <Icon name="person" size={16} />
-                                                    <span>歸還經手人: {rental.returned_by}</span>
-                                                </div>
-                                            )}
-                                            {rental.notes && (
-                                                <div className="rental-info-row">
-                                                    <Icon name="document-text" size={16} />
-                                                    <span>{rental.notes}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                                        ? `腳踏車 ${rental.bicycle_number}號`
+                                                        : `雨傘 ${rental.quantity}把`}
+                                                </td>
+                                                <td>{rental.room_number || '-'}</td>
+                                                <td>{rental.rented_by}</td>
+                                                <td>{formatDateTime(rental.rental_start_time)}</td>
+                                                <td>{rental.rental_end_time ? formatDateTime(rental.rental_end_time) : '-'}</td>
+                                                <td>{rental.returned_by || rental.rented_by}</td>
+                                            </tr>
+                                        ));
+                                    })()}
+                                </tbody>
+                            </table>
+
+                            {/* 底部統計和分頁 */}
+                            <div className="table-footer">
+                                <span className="table-stats">
+                                    共 {(() => {
+                                        // 計算篩選後的數量
+                                        let filtered = rentalHistory;
+                                        if (dateRangeStart || dateRangeEnd) {
+                                            filtered = filtered.filter(rental => {
+                                                const rentalDate = new Date(rental.rental_start_time);
+                                                const start = dateRangeStart ? new Date(dateRangeStart) : null;
+                                                const end = dateRangeEnd ? new Date(dateRangeEnd + 'T23:59:59') : null;
+                                                if (start && rentalDate < start) return false;
+                                                if (end && rentalDate > end) return false;
+                                                return true;
+                                            });
+                                        }
+                                        if (filterItemType) filtered = filtered.filter(r => r.type === filterItemType);
+                                        if (filterStatus) filtered = filtered.filter(r => r.status === filterStatus);
+                                        if (searchQuery) {
+                                            const query = searchQuery.toLowerCase();
+                                            filtered = filtered.filter(rental => {
+                                                const number = rental.type === 'bicycle' ? rental.bicycle_number : rental.quantity?.toString();
+                                                const room = rental.room_number || '';
+                                                const rentedBy = rental.rented_by || '';
+                                                const returnedBy = rental.returned_by || '';
+                                                return (
+                                                    number?.toLowerCase().includes(query) ||
+                                                    room.toLowerCase().includes(query) ||
+                                                    rentedBy.toLowerCase().includes(query) ||
+                                                    returnedBy.toLowerCase().includes(query)
+                                                );
+                                            });
+                                        }
+                                        return filtered.length;
+                                    })()} 筆記錄
+                                </span>
+                                <div className="pagination">
+                                    <span className="pagination-text">第 1 頁 / 共 1 頁</span>
+                                    <button className="pagination-btn" disabled>
+                                        <Icon name="chevron-back" size={20} />
+                                    </button>
+                                    <button className="pagination-btn" disabled>
+                                        <Icon name="chevron-forward" size={20} />
+                                    </button>
+                                </div>
                             </div>
-                        )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* 歸還 Modal */}
             <Modal
@@ -1176,14 +1365,37 @@ function RentalManagementPage() {
                         </div>
                     ) : (
                         <div className="form-group">
-                            <label>雨傘編號 *</label>
-                            <input
-                                type="text"
-                                value={editRentalForm.umbrella_number}
-                                onChange={(e) => setEditRentalForm({ ...editRentalForm, umbrella_number: e.target.value })}
-                                className="form-input"
-                                placeholder="請輸入雨傘編號"
-                            />
+                            <label>數量 *</label>
+                            <div className="quantity-selector">
+                                <button
+                                    className="quantity-btn"
+                                    onClick={() => setEditRentalForm(prev => ({
+                                        ...prev,
+                                        quantity: Math.max(1, (parseInt(prev.quantity) || 1) - 1)
+                                    }))}
+                                >
+                                    <Icon name="remove" size={16} />
+                                </button>
+                                <input
+                                    type="number"
+                                    value={editRentalForm.quantity}
+                                    onChange={(e) => setEditRentalForm({
+                                        ...editRentalForm,
+                                        quantity: Math.max(1, parseInt(e.target.value) || 1)
+                                    })}
+                                    className="quantity-input"
+                                    min="1"
+                                />
+                                <button
+                                    className="quantity-btn"
+                                    onClick={() => setEditRentalForm(prev => ({
+                                        ...prev,
+                                        quantity: (parseInt(prev.quantity) || 1) + 1
+                                    }))}
+                                >
+                                    <Icon name="add" size={16} />
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -1208,7 +1420,7 @@ function RentalManagementPage() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 }
 

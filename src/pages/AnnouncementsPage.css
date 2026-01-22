@@ -181,7 +181,8 @@
 .announcements-table td:nth-child(5) {
     width: 15%;
     /* 操作 */
-    text-align: right;
+    /* 操作 */
+    text-align: left;
 }
 
 /* 標題文字樣式 */
@@ -194,7 +195,7 @@
 
 /* 完整內容顯示樣式 */
 .announcement-content-full {
-    font-size: var(--font-size-base);
+    font-size: 16px;
     color: var(--color-text);
     line-height: 1.6;
     white-space: pre-wrap;
@@ -245,7 +246,7 @@
 .announcement-actions {
     display: flex;
     gap: var(--spacing-xs);
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .announcement-action-btn {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { itemAPI } from '../api/item';
+import '../styles/ModernTable.css';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
@@ -88,8 +89,8 @@ function ItemsPage() {
                     <Button onClick={() => setShowModal(true)}>+ 新增備品</Button>
                 </div>
 
-                <div className="items-page-table-container">
-                    <table className="data-table">
+                <div className="modern-table-container">
+                    <table className="modern-table">
                         <thead>
                             <tr>
                                 <th style={{ width: '60px' }}>圖示</th>
@@ -120,23 +121,15 @@ function ItemsPage() {
                                         <td>
                                             {item.category}
                                         </td>
-                                        <td className="action-cell">
+                                        <td className="action-cell" style={{ textAlign: 'right' }}>
                                             <button
+                                                className="action-btn delete"
                                                 onClick={() => handleDelete(item.id)}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    padding: '8px',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    borderRadius: '50%',
-                                                    color: 'var(--color-danger)'
-                                                }}
                                                 title="刪除"
+                                                style={{ display: 'inline-flex' }}
                                             >
-                                                <Icon name="trash-outline" size={20} color="var(--color-danger)" />
+                                                <Icon name="trash" size={14} />
+                                                刪除
                                             </button>
                                         </td>
                                     </tr>
@@ -144,6 +137,9 @@ function ItemsPage() {
                             )}
                         </tbody>
                     </table>
+                    <div className="table-footer">
+                        <span className="table-stats">共 {items.length} 筆紀錄</span>
+                    </div>
                 </div>
             </div>
 

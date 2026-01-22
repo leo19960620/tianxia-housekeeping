@@ -14,6 +14,7 @@ function FilterBar({
     statusOptions = [],
     sortOptions = [],
     dateRange = null,
+    children = null
 }) {
     const [searchValue, setSearchValue] = useState('');
 
@@ -93,6 +94,8 @@ function FilterBar({
                     </select>
                 </div>
             )}
+
+            {children}
         </div>
     );
 }
@@ -106,6 +109,7 @@ FilterBar.propTypes = {
     showStatusFilter: PropTypes.bool,
     showSearch: PropTypes.bool,
     showSort: PropTypes.bool,
+    children: PropTypes.node,
     statusOptions: PropTypes.arrayOf(
         PropTypes.shape({
             value: PropTypes.string.isRequired,

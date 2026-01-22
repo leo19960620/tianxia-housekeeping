@@ -23,7 +23,6 @@ function NewHandoverPage() {
     const [showUserPicker, setShowUserPicker] = useState(false);
     const [showInventoryModal, setShowInventoryModal] = useState(false);
     const [showOzoneModal, setShowOzoneModal] = useState(false);
-    const [showHandoverItemModal, setShowHandoverItemModal] = useState(false);
     const [showFloorSelector, setShowFloorSelector] = useState(false);
 
     // 表單資料
@@ -33,7 +32,7 @@ function NewHandoverPage() {
         handoverNotes: '',
         inventoryRecords: [],
         ozoneRecords: [],
-        handoverItems: [],
+
     });
 
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -65,8 +64,7 @@ function NewHandoverPage() {
         durationMinutes: 30,
     });
 
-    // 交班事項
-    const [handoverItemContent, setHandoverItemContent] = useState('');
+
 
     useEffect(() => {
         loadItems();
@@ -255,33 +253,7 @@ function NewHandoverPage() {
         setFormData({ ...formData, ozoneRecords: updated });
     };
 
-    // === 交班事項相關 ===
-    const openHandoverItemModal = () => {
-        setHandoverItemContent('');
-        setShowHandoverItemModal(true);
-    };
 
-    const confirmHandoverItem = () => {
-        if (!handoverItemContent.trim()) {
-            alert('請輸入交班事項內容');
-            return;
-        }
-
-        setFormData({
-            ...formData,
-            handoverItems: [
-                ...formData.handoverItems,
-                { content: handoverItemContent },
-            ],
-        });
-
-        setShowHandoverItemModal(false);
-    };
-
-    const removeHandoverItem = (index) => {
-        const updated = formData.handoverItems.filter((_, i) => i !== index);
-        setFormData({ ...formData, handoverItems: updated });
-    };
 
     // === 提交 ===
     const handleSubmit = async () => {
@@ -442,43 +414,23 @@ function NewHandoverPage() {
                                             {record.roomNumbers.sort().join('、') || '無房號'}
                                         </div>
                                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: 'var(--spacing-xs)' }}>
-                                            {new Date(record.startTime).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} ({record.durationMinutes}分鐘)
+                                            {(() => {
+                                                const start = new Date(record.startTime);
+                                                const activeStartTimeStr = start.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                                let endTimeStr = '';
+                                                if (record.durationMinutes) {
+                                                    const end = new Date(start.getTime() + record.durationMinutes * 60000);
+                                                    endTimeStr = end.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                                }
+                                                return `${activeStartTimeStr} - ${endTimeStr} (${record.durationMinutes}分鐘)`;
+                                            })()}
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
 
-                        {/* 交班事項 */}
-                        <div className="detail-section">
-                            <div className="detail-section-header">
-                                <h2 className="detail-section-title">
-                                    <Icon name="document-text-outline" size={20} />
-                                    交班事項
-                                </h2>
-                                <Button size="sm" onClick={openHandoverItemModal}>
-                                    <Icon name="add-outline" size={16} />
-                                    新增
-                                </Button>
-                            </div>
 
-                            {formData.handoverItems.length === 0 ? (
-                                <div className="empty-state">
-                                    <p>尚無交班事項</p>
-                                </div>
-                            ) : (
-                                formData.handoverItems.map((item, index) => (
-                                    <div key={index} className="record-card">
-                                        <div className="record-header">
-                                            <div className="record-text">{item.content}</div>
-                                            <button className="delete-button" onClick={() => removeHandoverItem(index)}>
-                                                <Icon name="trash-outline" size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
                     </div>
                 </div>
 
@@ -840,39 +792,7 @@ function NewHandoverPage() {
                 </div>
             </Modal>
 
-            {/* 交班事項Modal */}
-            <Modal
-                isOpen={showHandoverItemModal}
-                onClose={() => setShowHandoverItemModal(false)}
-                title="新增交班事項"
-            >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                    <textarea
-                        style={{
-                            width: '100%',
-                            minHeight: '120px',
-                            padding: 'var(--spacing-sm)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: 'var(--font-size-base)',
-                            fontFamily: 'inherit',
-                        }}
-                        value={handoverItemContent}
-                        onChange={(e) => setHandoverItemContent(e.target.value)}
-                        placeholder="請輸入交班事項..."
-                        autoFocus
-                    />
 
-                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                        <Button variant="secondary" fullWidth onClick={() => setShowHandoverItemModal(false)}>
-                            取消
-                        </Button>
-                        <Button fullWidth onClick={confirmHandoverItem}>
-                            新增
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
 
             {/* 樓層選擇Modal */}
             <FloorSelectorModal

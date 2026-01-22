@@ -16,6 +16,7 @@ function Layout() {
         if (path.startsWith('/handover/')) return '交接詳情';
         if (path === '/items') return '備品管理';
         if (path === '/users') return '使用者管理';
+        if (path === '/rental-management') return '租借管理';
         if (path === '/ozone-stats') return '臭氧統計';
         if (path === '/settings') return '系統設定';
         return '系統';

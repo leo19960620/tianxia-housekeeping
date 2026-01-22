@@ -5,6 +5,7 @@ import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
 import UserPicker from '../components/business/UserPicker';
 import { getTodayMidnight } from '../utils/timezone';
+import '../styles/ModernTable.css';
 import './AnnouncementsPage.css';
 
 function AnnouncementsPage() {
@@ -311,20 +312,27 @@ function AnnouncementsPage() {
                         <div className="announcements-empty-text">目前無公告</div>
                     </div>
                 ) : (
-                    <div className="announcements-table-container">
-                        <table className="announcements-table">
+                    <div className="modern-table-container">
+                        <table className="modern-table">
                             <thead>
                                 <tr>
                                     <th>公告內容</th>
                                     <th>日期範圍</th>
                                     <th>公告人</th>
-                                    <th>狀態</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredAnnouncements.map((ann) => {
                                     const status = getAnnouncementStatus(ann);
+                                    let statusClass = 'default';
+                                    let statusText = '';
+
+                                    if (status === 'routine') { statusClass = 'active'; statusText = '例行'; }
+                                    else if (status === 'pending') { statusClass = 'warning'; statusText = '未開始'; }
+                                    else if (status === 'active') { statusClass = 'success'; statusText = '進行中'; }
+                                    else if (status === 'inactive') { statusClass = 'default'; statusText = '已到期'; }
+
                                     return (
                                         <tr key={ann.id}>
                                             <td>
@@ -339,29 +347,21 @@ function AnnouncementsPage() {
                                             </td>
                                             <td>{ann.announcer || '-'}</td>
                                             <td>
-                                                <span className={`announcement-status-badge ${status}`}>
-                                                    {status === 'routine' && '例行'}
-                                                    {status === 'pending' && '未開始'}
-                                                    {status === 'active' && '進行中'}
-                                                    {status === 'inactive' && '已到期'}
-                                                </span>
-                                            </td>
-                                            <td>
                                                 <div className="announcement-actions">
                                                     <button
-                                                        className="announcement-action-btn edit"
+                                                        className="action-btn edit"
                                                         onClick={() => handleEdit(ann)}
                                                         title="編輯公告"
                                                     >
-                                                        <Icon name="create" size={16} />
+                                                        <Icon name="create" size={14} />
                                                         編輯
                                                     </button>
                                                     <button
-                                                        className="announcement-action-btn delete"
+                                                        className="action-btn delete"
                                                         onClick={() => handleDelete(ann.id)}
                                                         title="刪除公告"
                                                     >
-                                                        <Icon name="trash" size={16} />
+                                                        <Icon name="trash" size={14} />
                                                         刪除
                                                     </button>
                                                 </div>
@@ -371,6 +371,9 @@ function AnnouncementsPage() {
                                 })}
                             </tbody>
                         </table>
+                        <div className="table-footer">
+                            <span className="table-stats">共 {filteredAnnouncements.length} 筆紀錄</span>
+                        </div>
                     </div>
                 )}
             </div>

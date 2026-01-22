@@ -15,6 +15,7 @@ function HomePage() {
     const [routineAnnouncements, setRoutineAnnouncements] = useState([]);
     const [todayHandovers, setTodayHandovers] = useState([]);
     const [handoverItems, setHandoverItems] = useState([]);
+    const [recentHandoverItems, setRecentHandoverItems] = useState([]);
     const [activeBicycles, setActiveBicycles] = useState([]);
     const [activeUmbrellas, setActiveUmbrellas] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -101,7 +102,6 @@ function HomePage() {
                         receive_count: receiveCount,
                         return_count: returnCount,
                         ozone_count: detail.ozone_records?.length || 0,
-                        item_count: detail.handover_items?.length || 0,
                         inventory_records: detail.inventory_records || [],
                         ozone_records: detail.ozone_records || [],
                     };
@@ -119,6 +119,12 @@ function HomePage() {
                 });
 
                 setHandoverItems(todayItems);
+
+                // 取最新 5 則交班事項用於「近期交接事項」
+                const recentItems = itemsRes.data
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 5);
+                setRecentHandoverItems(recentItems);
             }
 
             // 處理租借中的腳踏車資料
@@ -193,26 +199,30 @@ function HomePage() {
                     onClick={() => navigate('/rental-management')}
                 >
                     <div className="rental-alert-content">
-                        {activeBicycles.length > 0 && (
-                            <div className="rental-alert-item">
-                                <Icon name="bicycle" size={18} />
-                                <span className="rental-alert-text">
-                                    {activeBicycles.length} 台租借中
-                                </span>
-                            </div>
-                        )}
-                        {activeBicycles.length > 0 && activeUmbrellas.length > 0 && (
-                            <span className="rental-alert-divider">|</span>
-                        )}
-                        {activeUmbrellas.length > 0 && (
-                            <div className="rental-alert-item">
-                                <Icon name="umbrella" size={18} />
-                                <span className="rental-alert-text">
-                                    {activeUmbrellas.reduce((sum, u) => sum + (u.quantity || 1), 0)} 把租借中
-                                </span>
-                            </div>
-                        )}
-                        <Icon name="chevron-forward" size={16} className="rental-alert-arrow" />
+                        <div className="rental-status-group">
+                            {activeBicycles.length > 0 && (
+                                <div className="rental-alert-item">
+                                    <Icon name="bicycle" size={20} />
+                                    <span className="rental-alert-text">
+                                        <strong>{activeBicycles.length}</strong> 台租借中
+                                    </span>
+                                </div>
+                            )}
+
+                            {activeBicycles.length > 0 && activeUmbrellas.length > 0 && (
+                                <div className="rental-spacer"></div>
+                            )}
+
+                            {activeUmbrellas.length > 0 && (
+                                <div className="rental-alert-item">
+                                    <Icon name="umbrella" size={20} />
+                                    <span className="rental-alert-text">
+                                        <strong>{activeUmbrellas.reduce((sum, u) => sum + (u.quantity || 1), 0)}</strong> 把租借中
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        <Icon name="chevron-forward" size={18} className="rental-alert-arrow" />
                     </div>
                 </div>
             )}
@@ -308,18 +318,18 @@ function HomePage() {
             <div className="home-content">
                 {/* 佈局使用 2 欄 - 各佔 50% */}
                 <div className="dashboard-layout-equal">
-                    {/* 左側 - 交接事項 */}
+                    {/* 左側 - 近期交接事項 */}
                     <div className="dashboard-column">
                         <div className="section-header-simple">
                             <Icon name="list" size={20} />
-                            <h2 className="section-title-simple">交接事項</h2>
+                            <h2 className="section-title-simple">近期交接事項</h2>
                         </div>
 
-                        {handoverItems.length === 0 ? (
-                            <div className="empty-state-simple">今日無交接事項</div>
+                        {recentHandoverItems.length === 0 ? (
+                            <div className="empty-state-simple">尚無交接事項</div>
                         ) : (
                             <div className="handover-items-list">
-                                {handoverItems.map((item) => (
+                                {recentHandoverItems.map((item) => (
                                     <div
                                         key={item.key_id || item.id}
                                         className="handover-item-card"
@@ -334,10 +344,10 @@ function HomePage() {
                                                 {formatTime(item.created_at)}
                                             </span>
                                         </div>
-                                        {item.staff_name && (
+                                        {item.creator_name && (
                                             <div className="handover-item-user-row">
                                                 <Icon name="person-outline" size={14} />
-                                                <span className="handover-item-user-name">{item.staff_name}</span>
+                                                <span className="handover-item-user-name">{item.creator_name}</span>
                                             </div>
                                         )}
                                     </div>
@@ -359,12 +369,13 @@ function HomePage() {
                             <div className="today-shifts-list">
                                 {todayHandovers.map((item) => (
                                     <div key={item.id} className="shift-card-wrapper">
-                                        <div className="shift-card-simple">
-                                            {/* 卡片主體 - 點擊展開 */}
-                                            <div
-                                                className="shift-card-main"
-                                                onClick={() => setExpandedShiftId(expandedShiftId === item.id ? null : item.id)}
-                                            >
+                                        <div
+                                            className="shift-card-simple"
+                                            onClick={() => setExpandedShiftId(expandedShiftId === item.id ? null : item.id)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {/* 卡片主體 */}
+                                            <div className="shift-card-main">
                                                 <div className="shift-header-simple">
                                                     <Icon name="sunny" size={20} />
                                                     <div className="shift-info-simple">
@@ -378,7 +389,7 @@ function HomePage() {
                                                         className="shift-edit-btn"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigate(`/ handover / ${item.id}?edit = true`);
+                                                            navigate(`/handover/${item.id}?edit=true`);
                                                         }}
                                                         title="編輯交接紀錄"
                                                     >
@@ -407,22 +418,14 @@ function HomePage() {
                                                             <span className="shift-stat-number">{item.ozone_count || 0}</span>
                                                         </div>
                                                     </div>
-                                                    <div className="shift-stat-item">
-                                                        <Icon name="document-text" size={32} color="var(--color-primary)" />
-                                                        <div className="shift-stat-text">
-                                                            <span className="shift-stat-name">交接事項</span>
-                                                            <span className="shift-stat-number">{item.item_count || 0}</span>
-                                                        </div>
-                                                    </div>
                                                 </div>
-                                                {/* 展開提示 */}
-                                                <div className="shift-expand-hint">
-                                                    <Icon
-                                                        name={expandedShiftId === item.id ? "chevron-up" : "chevron-down"}
-                                                        size={16}
-                                                    />
-                                                    <span>{expandedShiftId === item.id ? "點擊收合" : "點擊查看詳情"}</span>
-                                                </div>
+                                            </div>
+                                            <div className="shift-expand-hint">
+                                                <Icon
+                                                    name={expandedShiftId === item.id ? "chevron-up" : "chevron-down"}
+                                                    size={16}
+                                                />
+                                                <span>{expandedShiftId === item.id ? "點擊收合" : "點擊查看詳情"}</span>
                                             </div>
 
                                             {/* 展開的詳細記錄 */}
@@ -440,7 +443,7 @@ function HomePage() {
                                                             <div className="detail-records-list">
                                                                 {item.inventory_records.map((record, idx) => (
                                                                     <div key={record.id || idx} className="detail-record-item">
-                                                                        <span className={`inventory - status - badge ${record.status === '收' ? 'receive' : 'return'} `}>
+                                                                        <span className={`inventory-status-badge ${record.status === '收' ? 'receive' : 'return'}`}>
                                                                             {record.status}
                                                                         </span>
                                                                         <span className="detail-record-text">
@@ -470,10 +473,20 @@ function HomePage() {
                                                                             {record.start_time && (
                                                                                 <span className="ozone-time-text">
                                                                                     {' · '}
-                                                                                    {new Date(record.start_time).toLocaleTimeString('zh-TW', {
-                                                                                        hour: '2-digit',
-                                                                                        minute: '2-digit',
-                                                                                    })}
+                                                                                    {(() => {
+                                                                                        const start = new Date(record.start_time);
+                                                                                        const startTimeStr = start.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                                                                                        let timeDisplay = startTimeStr;
+
+                                                                                        if (record.duration_minutes) {
+                                                                                            const end = new Date(start.getTime() + record.duration_minutes * 60000);
+                                                                                            const endTimeStr = end.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                                                                            timeDisplay = `${startTimeStr} - ${endTimeStr}`;
+                                                                                        }
+
+                                                                                        return timeDisplay;
+                                                                                    })()}
                                                                                 </span>
                                                                             )}
                                                                         </span>
@@ -486,6 +499,7 @@ function HomePage() {
                                             )}
                                         </div>
                                     </div>
+
                                 ))}
                             </div>
                         )}

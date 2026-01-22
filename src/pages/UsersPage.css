@@ -20,14 +20,8 @@
 }
 
 .user-id-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    background-color: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-family: monospace;
-    font-size: 0.85rem;
     color: var(--color-text-secondary);
+    font-size: 0.9rem;
 }
 
 /* Share basic table styles */
