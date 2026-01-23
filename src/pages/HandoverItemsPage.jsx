@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { handoverItemAPI } from '../api/handoverItem';
+import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
-import UserPicker from '../components/business/UserPicker';
 import Icon from '../components/common/Icon';
+import TableSkeleton from '../components/common/TableSkeleton';
 import '../styles/ModernTable.css';
 import './HandoverItemsPage.css';
 
@@ -16,15 +17,31 @@ function HandoverItemsPage() {
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showUserPicker, setShowUserPicker] = useState(false);
 
     // Form states
     const [formContent, setFormContent] = useState('');
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
 
+    // Dropdown states
+    const [users, setUsers] = useState([]);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
     useEffect(() => {
         loadItems();
+        loadUsers();
+
+        // 點擊外部關閉下拉選單
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     useEffect(() => {
@@ -42,6 +59,17 @@ function HandoverItemsPage() {
             console.error('載入交班事項失敗:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUsers = async () => {
+        try {
+            const res = await userAPI.getAll();
+            if (res.success) {
+                setUsers(res.data);
+            }
+        } catch (error) {
+            console.error('載入使用者失敗:', error);
         }
     };
 
@@ -78,7 +106,8 @@ function HandoverItemsPage() {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(item => {
                 const content = (item.item_content || item.content || '').toLowerCase();
-                const staff = (item.staff_name || '').toLowerCase();
+                // 優先使用 create_by，並向下相容 createby 和 staff_name
+                const staff = (item.create_by || item.createby || item.staff_name || '').toLowerCase();
                 return content.includes(query) || staff.includes(query);
             });
         }
@@ -106,7 +135,9 @@ function HandoverItemsPage() {
         try {
             await handoverItemAPI.create({
                 content: formContent,
-                created_by: selectedStaff.id
+                created_by: selectedStaff.id,      // ID
+                create_by: selectedStaff.full_name, // Name (create_by) - 使用者指定
+                createby: selectedStaff.full_name  // Name (createby) - 備用
             });
             setShowAddModal(false);
             loadItems();
@@ -151,15 +182,13 @@ function HandoverItemsPage() {
         }
     };
 
+    const handleUserSelect = (user) => {
+        setSelectedStaff(user);
+        setShowUserDropdown(false);
+    };
+
     if (loading) {
-        return (
-            <div className="handover-items-page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
-                </div>
-            </div>
-        );
+        return <TableSkeleton />;
     }
 
     return (
@@ -218,36 +247,42 @@ function HandoverItemsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredItems.map((item) => (
-                                    <tr key={item.key_id || item.id}>
-                                        <td className="item-date-cell">
-                                            {item.created_at &&
-                                                new Date(item.created_at).toLocaleDateString('zh-TW')}
-                                        </td>
-                                        <td className="item-content-cell">
-                                            {item.item_content || item.content}
-                                        </td>
-                                        <td className="item-staff-cell">
-                                            {item.staff_name || '-'}
-                                        </td>
-                                        <td className="item-actions-cell">
-                                            <button
-                                                className="action-btn edit"
-                                                onClick={() => handleEditClick(item)}
-                                            >
-                                                <Icon name="create-outline" size={14} />
-                                                編輯
-                                            </button>
-                                            <button
-                                                className="action-btn delete"
-                                                onClick={() => handleDeleteClick(item)}
-                                            >
-                                                <Icon name="trash-outline" size={14} />
-                                                刪除
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filteredItems.map((item) => {
+                                    // 嘗試透過 created_by (User ID) 匹配使用者名稱
+                                    const creatorUser = users.find(u => u.id === item.created_by || u.id === Number(item.created_by));
+                                    const creatorName = creatorUser ? creatorUser.full_name : (item.create_by || item.createby || item.staff_name || '-');
+
+                                    return (
+                                        <tr key={item.key_id || item.id}>
+                                            <td className="item-date-cell">
+                                                {item.created_at &&
+                                                    new Date(item.created_at).toLocaleDateString('zh-TW')}
+                                            </td>
+                                            <td className="item-content-cell">
+                                                {item.item_content || item.content}
+                                            </td>
+                                            <td className="item-staff-cell">
+                                                {creatorName}
+                                            </td>
+                                            <td className="item-actions-cell">
+                                                <button
+                                                    className="action-btn edit"
+                                                    onClick={() => handleEditClick(item)}
+                                                >
+                                                    <Icon name="create-outline" size={14} />
+                                                    編輯
+                                                </button>
+                                                <button
+                                                    className="action-btn delete"
+                                                    onClick={() => handleDeleteClick(item)}
+                                                >
+                                                    <Icon name="trash-outline" size={14} />
+                                                    刪除
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                         <div className="table-footer">
@@ -271,13 +306,62 @@ function HandoverItemsPage() {
                                 rows={4}
                             />
                         </div>
-                        <div className="form-group">
+                        <div className="form-group" ref={dropdownRef}>
                             <label>交班人</label>
                             <div
                                 className="picker-trigger"
-                                onClick={() => setShowUserPicker(true)}
+                                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                style={{ position: 'relative', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                             >
-                                {selectedStaff ? selectedStaff.full_name : '選擇交班人'}
+                                <span>{selectedStaff ? selectedStaff.full_name : '選擇交班人'}</span>
+                                <Icon name={showUserDropdown ? "chevron-up" : "chevron-down"} size={16} />
+
+                                {/* 下拉選單 - 向上展開 */}
+                                {showUserDropdown && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        marginBottom: '4px',
+                                        backgroundColor: 'white',
+                                        borderRadius: 'var(--radius-md)',
+                                        boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
+                                        zIndex: 100,
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        border: '1px solid #e0e0e0',
+                                        padding: '4px 0',
+                                        color: '#333'
+                                    }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {users.length > 0 ? (
+                                            users.map(user => (
+                                                <div
+                                                    key={user.id}
+                                                    onClick={() => handleUserSelect(user)}
+                                                    style={{
+                                                        padding: '10px 16px',
+                                                        cursor: 'pointer',
+                                                        backgroundColor: selectedStaff?.id === user.id ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
+                                                        transition: 'background-color 0.2s',
+                                                        color: selectedStaff?.id === user.id ? 'var(--color-primary)' : 'var(--color-text)',
+                                                        fontWeight: selectedStaff?.id === user.id ? 600 : 400
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = selectedStaff?.id === user.id ? 'rgba(46, 125, 50, 0.12)' : '#f5f5f5'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedStaff?.id === user.id ? 'rgba(46, 125, 50, 0.08)' : 'transparent'}
+                                                >
+                                                    {user.full_name}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div style={{ padding: '12px', textAlign: 'center', color: '#999' }}>
+                                                無使用者資料
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="modal-actions">
@@ -308,14 +392,6 @@ function HandoverItemsPage() {
                     </div>
                 </div>
             )}
-
-            {/* 人員選擇器 */}
-            <UserPicker
-                visible={showUserPicker}
-                selectedUser={selectedStaff}
-                onSelect={setSelectedStaff}
-                onClose={() => setShowUserPicker(false)}
-            />
         </div>
     );
 }

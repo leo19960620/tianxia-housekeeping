@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handoverAPI } from '../api/handover';
 import { itemAPI } from '../api/item';
 import { roomAPI } from '../api/room';
+import { userAPI } from '../api/user';
 import { SHIFTS, SHIFT_TIMES, INVENTORY_STATUS, FLOORS } from '../utils/constants';
-import MultiUserPicker from '../components/business/MultiUserPicker';
 import FloorSelectorModal from '../components/business/FloorSelectorModal';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
@@ -18,12 +18,14 @@ function NewHandoverPage() {
     const [categories, setCategories] = useState([]);
     const [floors, setFloors] = useState([]); // 從資料庫載入的樓層資料
     const [roomsByFloor, setRoomsByFloor] = useState({}); // 依樓層分組的房號
+    const [users, setUsers] = useState([]); // 所有使用者清單
 
     // Modal 狀態
-    const [showUserPicker, setShowUserPicker] = useState(false);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
     const [showInventoryModal, setShowInventoryModal] = useState(false);
     const [showOzoneModal, setShowOzoneModal] = useState(false);
     const [showFloorSelector, setShowFloorSelector] = useState(false);
+    const dropdownRef = useRef(null);
 
     // 表單資料
     const [formData, setFormData] = useState({
@@ -34,8 +36,6 @@ function NewHandoverPage() {
         ozoneRecords: [],
 
     });
-
-    const [selectedUsers, setSelectedUsers] = useState([]);
 
     // 取得當前本地時間 (UTC+8) 的字串格式
     const getCurrentLocalTime = () => {
@@ -69,6 +69,18 @@ function NewHandoverPage() {
     useEffect(() => {
         loadItems();
         loadRooms();
+        loadUsers();
+
+        // 點擊外部關閉下拉選單
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const loadItems = async () => {
@@ -115,8 +127,34 @@ function NewHandoverPage() {
         }
     };
 
+    const loadUsers = async () => {
+        try {
+            const res = await userAPI.getAll();
+            if (res.success) {
+                setUsers(res.data);
+            }
+        } catch (error) {
+            console.error('載入使用者失敗:', error);
+        }
+    };
+
     const selectShift = (shift) => {
         setFormData({ ...formData, shift });
+    };
+
+    const toggleUserSelection = (userName) => {
+        const currentSelected = formData.staffNames;
+        if (currentSelected.includes(userName)) {
+            setFormData({
+                ...formData,
+                staffNames: currentSelected.filter(name => name !== userName)
+            });
+        } else {
+            setFormData({
+                ...formData,
+                staffNames: [...currentSelected, userName]
+            });
+        }
     };
 
     // === 備品相關 ===
@@ -320,16 +358,88 @@ function NewHandoverPage() {
                         </div>
                     </div>
 
-                    {/* 員工選擇 */}
-                    <div className="staff-selection">
+                    {/* 員工選擇 - 改為下拉選單 */}
+                    <div className="staff-selection" ref={dropdownRef}>
                         <label className="staff-selection-label">員工姓名 (可複選) *</label>
                         <div
                             className={`staff-input ${formData.staffNames.length > 0 ? 'selected' : 'placeholder'}`}
-                            onClick={() => setShowUserPicker(true)}
+                            onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            style={{ position: 'relative', cursor: 'pointer' }}
                         >
-                            {formData.staffNames.length > 0
-                                ? formData.staffNames.join(', ')
-                                : '點擊選擇員工'}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                <span>
+                                    {formData.staffNames.length > 0
+                                        ? formData.staffNames.join(', ')
+                                        : '點擊選擇員工'}
+                                </span>
+                                <Icon name={showUserDropdown ? "chevron-up" : "chevron-down"} size={16} />
+                            </div>
+
+                            {/* 下拉選單列表 - 改為向上展開 */}
+                            {showUserDropdown && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    marginBottom: '4px',
+                                    backgroundColor: 'white',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
+                                    zIndex: 100,
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                    border: '1px solid #e0e0e0',
+                                    padding: '4px 0'
+                                }}
+                                    onClick={(e) => e.stopPropagation()} // 防止點擊內部關閉
+                                >
+                                    {users.length > 0 ? (
+                                        users.map(user => (
+                                            <div
+                                                key={user.id}
+                                                onClick={() => toggleUserSelection(user.full_name)}
+                                                style={{
+                                                    padding: '10px 16px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: formData.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
+                                                    transition: 'background-color 0.2s',
+                                                    color: '#333'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = formData.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.12)' : '#f5f5f5'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = formData.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.08)' : 'transparent'}
+                                            >
+                                                <div style={{
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    borderRadius: '4px',
+                                                    border: `2px solid ${formData.staffNames.includes(user.full_name) ? '#2e7d32' : '#bdbdbd'}`,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    backgroundColor: formData.staffNames.includes(user.full_name) ? '#2e7d32' : 'white'
+                                                }}>
+                                                    {formData.staffNames.includes(user.full_name) && (
+                                                        <Icon name="checkmark" size={12} color="white" />
+                                                    )}
+                                                </div>
+                                                <span style={{
+                                                    fontWeight: formData.staffNames.includes(user.full_name) ? 600 : 400
+                                                }}>
+                                                    {user.full_name}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: '12px', textAlign: 'center', color: '#999' }}>
+                                            載入中或無使用者資料...
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -456,19 +566,7 @@ function NewHandoverPage() {
                 </div>
             </div>
 
-            {/* 使用者選擇器 */}
-            <MultiUserPicker
-                visible={showUserPicker}
-                selectedUsers={selectedUsers.map((u) => u.id)}
-                onConfirm={(users) => {
-                    setSelectedUsers(users);
-                    setFormData({
-                        ...formData,
-                        staffNames: users.map((u) => u.full_name),
-                    });
-                }}
-                onClose={() => setShowUserPicker(false)}
-            />
+
 
             {/* 備品Modal */}
             <Modal

@@ -7,6 +7,7 @@ import { bicycleRentalAPI, umbrellaRentalAPI } from '../api/rental';
 import { getTodayMidnight } from '../utils/timezone';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
+import DashboardSkeleton from '../components/common/DashboardSkeleton';
 import './HomePage.css';
 
 function HomePage() {
@@ -166,14 +167,7 @@ function HomePage() {
     };
 
     if (loading) {
-        return (
-            <div className="home-page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
-                </div>
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
 

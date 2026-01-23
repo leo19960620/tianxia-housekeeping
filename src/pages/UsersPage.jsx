@@ -4,6 +4,7 @@ import Button from '../components/common/Button';
 import Icon from '../components/common/Icon';
 import '../styles/ModernTable.css';
 import Modal from '../components/common/Modal';
+import TableSkeleton from '../components/common/TableSkeleton';
 import './UsersPage.css';
 
 function UsersPage() {
@@ -63,14 +64,7 @@ function UsersPage() {
     };
 
     if (loading) {
-        return (
-            <div className="page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
-                </div>
-            </div>
-        );
+        return <TableSkeleton />;
     }
 
     return (

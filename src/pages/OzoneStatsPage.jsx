@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ozoneAPI } from '../api/ozone';
 import { FLOORS } from '../utils/constants';
 import Icon from '../components/common/Icon';
+import DashboardSkeleton from '../components/common/DashboardSkeleton';
 import './OzoneStatsPage.css';
 
 function OzoneStatsPage() {
@@ -257,6 +258,10 @@ function OzoneStatsPage() {
     const isSameDate = (d1, d2) => d1 && d2 && d1.toDateString() === d2.toDateString();
 
     const availableRooms = FLOORS.find(f => f.label === reservationForm.floor)?.rooms || [];
+
+    if (loading) {
+        return <DashboardSkeleton />;
+    }
 
     // ================== Render ==================
     return (

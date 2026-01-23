@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { handoverAPI } from '../api/handover';
 import { itemAPI } from '../api/item';
+import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
 import FloorSelectorModal from '../components/business/FloorSelectorModal';
-import MultiUserPicker from '../components/business/MultiUserPicker';
 import { INVENTORY_STATUS, FLOORS, SHIFTS, SHIFT_TIMES } from '../utils/constants';
 import { getTaipeiTimeForInput } from '../utils/timezone';
 import './HandoverDetailPage.css';
@@ -43,20 +43,31 @@ function HandoverDetailPage() {
         notes: '',
     });
 
-
-
     // 編輯模式相關
     const [editMode, setEditMode] = useState(false);
     const [editForm, setEditForm] = useState({
         shift: '',
         staffNames: [], // 支援多個員工
     });
-    const [selectedUsers, setSelectedUsers] = useState([]);
-    const [showUserPicker, setShowUserPicker] = useState(false);
+    const [users, setUsers] = useState([]); // 所有員工清單
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         loadData();
         loadItems();
+        loadUsers();
+
+        // 點擊外部關閉下拉選單
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [id]);
 
     const loadData = async () => {
@@ -71,6 +82,17 @@ function HandoverDetailPage() {
             alert('無法載入交接紀錄');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUsers = async () => {
+        try {
+            const res = await userAPI.getAll();
+            if (res.success) {
+                setUsers(res.data);
+            }
+        } catch (error) {
+            console.error('載入使用者失敗:', error);
         }
     };
 
@@ -114,7 +136,21 @@ function HandoverDetailPage() {
             shift: '',
             staffNames: [],
         });
-        setSelectedUsers([]);
+    };
+
+    const toggleUserSelection = (userName) => {
+        const currentSelected = editForm.staffNames;
+        if (currentSelected.includes(userName)) {
+            setEditForm({
+                ...editForm,
+                staffNames: currentSelected.filter(name => name !== userName)
+            });
+        } else {
+            setEditForm({
+                ...editForm,
+                staffNames: [...currentSelected, userName]
+            });
+        }
     };
 
     const loadItems = async () => {
@@ -461,13 +497,14 @@ function HandoverDetailPage() {
                                 </div>
                             </div>
 
-                            {/* 員工選擇 */}
-                            <div>
+                            {/* 員工選擇 - 改為下拉選單 */}
+                            <div ref={dropdownRef}>
                                 <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)', fontWeight: 600, color: 'var(--color-text)' }}>
                                     員工姓名 * (可複選)
                                 </label>
                                 <div
                                     style={{
+                                        position: 'relative',
                                         padding: 'var(--spacing-md)',
                                         border: '1.5px solid var(--color-border)',
                                         borderRadius: 'var(--radius-md)',
@@ -476,11 +513,83 @@ function HandoverDetailPage() {
                                         minHeight: '44px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        color: selectedUsers.length > 0 ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                                        color: editForm.staffNames.length > 0 ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                                        justifyContent: 'space-between'
                                     }}
-                                    onClick={() => setShowUserPicker(true)}
+                                    onClick={() => setShowUserDropdown(!showUserDropdown)}
                                 >
-                                    {selectedUsers.length > 0 ? selectedUsers.map(u => u.full_name).join(', ') : '請選擇員工'}
+                                    <span>
+                                        {editForm.staffNames.length > 0 ? editForm.staffNames.join(', ') : '請選擇員工'}
+                                    </span>
+                                    <Icon name={showUserDropdown ? "chevron-up" : "chevron-down"} size={16} />
+
+                                    {/* 下拉選單列表 - 改為向上展開 */}
+                                    {showUserDropdown && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            bottom: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            marginBottom: '4px',
+                                            backgroundColor: 'white',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
+                                            zIndex: 100,
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            border: '1px solid #e0e0e0',
+                                            padding: '4px 0',
+                                            color: '#333',
+                                            textAlign: 'left'
+                                        }}
+                                            onClick={(e) => e.stopPropagation()} // 防止點擊內部關閉
+                                        >
+                                            {users.length > 0 ? (
+                                                users.map(user => (
+                                                    <div
+                                                        key={user.id}
+                                                        onClick={() => toggleUserSelection(user.full_name)}
+                                                        style={{
+                                                            padding: '10px 16px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '12px',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: editForm.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
+                                                            transition: 'background-color 0.2s',
+                                                            color: '#333'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = editForm.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.12)' : '#f5f5f5'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = editForm.staffNames.includes(user.full_name) ? 'rgba(46, 125, 50, 0.08)' : 'transparent'}
+                                                    >
+                                                        <div style={{
+                                                            width: '18px',
+                                                            height: '18px',
+                                                            borderRadius: '4px',
+                                                            border: `2px solid ${editForm.staffNames.includes(user.full_name) ? '#2e7d32' : '#bdbdbd'}`,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            backgroundColor: editForm.staffNames.includes(user.full_name) ? '#2e7d32' : 'white'
+                                                        }}>
+                                                            {editForm.staffNames.includes(user.full_name) && (
+                                                                <Icon name="checkmark" size={12} color="white" />
+                                                            )}
+                                                        </div>
+                                                        <span style={{
+                                                            fontWeight: editForm.staffNames.includes(user.full_name) ? 600 : 400
+                                                        }}>
+                                                            {user.full_name}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div style={{ padding: '12px', textAlign: 'center', color: '#999' }}>
+                                                    載入中或無使用者資料...
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -977,39 +1086,7 @@ function HandoverDetailPage() {
                 </div>
             </Modal>
 
-            {/* 交班事項Modal */}
-            <Modal
-                isOpen={showHandoverItemModal}
-                onClose={() => setShowHandoverItemModal(false)}
-                title="新增交班事項"
-            >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                    <textarea
-                        style={{
-                            width: '100%',
-                            minHeight: '120px',
-                            padding: 'var(--spacing-sm)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: 'var(--font-size-base)',
-                            fontFamily: 'inherit',
-                        }}
-                        value={handoverItemContent}
-                        onChange={(e) => setHandoverItemContent(e.target.value)}
-                        placeholder="請輸入交班事項..."
-                        autoFocus
-                    />
 
-                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                        <Button variant="secondary" fullWidth onClick={() => setShowHandoverItemModal(false)}>
-                            取消
-                        </Button>
-                        <Button fullWidth onClick={confirmHandoverItem}>
-                            新增
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
 
             {/* 樓層選擇Modal */}
             <FloorSelectorModal
@@ -1018,16 +1095,7 @@ function HandoverDetailPage() {
                 onCancel={() => setShowFloorSelector(false)}
             />
 
-            {/* 員工選擇器（複選） */}
-            <MultiUserPicker
-                visible={showUserPicker}
-                selectedUsers={selectedUsers.map(u => u.id)}
-                onConfirm={users => {
-                    setSelectedUsers(users);
-                    setEditForm({ ...editForm, staffNames: users.map(u => u.full_name) });
-                }}
-                onClose={() => setShowUserPicker(false)}
-            />
+
         </div >
     );
 }

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { announcementAPI } from '../api/announcement';
+import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
-import UserPicker from '../components/business/UserPicker';
+import TableSkeleton from '../components/common/TableSkeleton';
 import { getTodayMidnight } from '../utils/timezone';
 import '../styles/ModernTable.css';
 import './AnnouncementsPage.css';
@@ -12,10 +13,8 @@ function AnnouncementsPage() {
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [showUserPicker, setShowUserPicker] = useState(false);
     const [activeTab, setActiveTab] = useState('active'); // 'active', 'pending', 'expired', or 'recurring'
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
@@ -23,13 +22,29 @@ function AnnouncementsPage() {
         content: '',
         start_date: '',
         end_date: '',
-        announcer: '',
+        created_by: '', // Changed from announcer
         announcement_type: 'normal',
     });
-    const [selectedUser, setSelectedUser] = useState(null);
+
+    // 下拉選單相關
+    const [users, setUsers] = useState([]);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         loadAnnouncements();
+        loadUsers();
+
+        // 點擊外部關閉下拉選單
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const loadAnnouncements = async () => {
@@ -43,6 +58,17 @@ function AnnouncementsPage() {
             console.error('載入公告失敗:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUsers = async () => {
+        try {
+            const res = await userAPI.getAll();
+            if (res.success) {
+                setUsers(res.data);
+            }
+        } catch (error) {
+            console.error('載入使用者失敗:', error);
         }
     };
 
@@ -106,34 +132,8 @@ function AnnouncementsPage() {
         if (searchKeyword) {
             filtered = filtered.filter(ann =>
                 ann.content?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-                ann.announcer?.toLowerCase().includes(searchKeyword.toLowerCase())
+                (ann.createby || ann.created_by || ann.announcer || '').toLowerCase().includes(searchKeyword.toLowerCase())
             );
-        }
-
-        // 移除狀態篩選（已透過頁籤處理）
-        // 移除作者篩選
-
-        // 日期範圍篩選
-        if (dateRange.startDate || dateRange.endDate) {
-            filtered = filtered.filter(ann => {
-                const annStart = new Date(ann.start_date);
-                const annEnd = new Date(ann.end_date);
-
-                if (dateRange.startDate && dateRange.endDate) {
-                    const filterStart = new Date(dateRange.startDate);
-                    const filterEnd = new Date(dateRange.endDate);
-                    return (annStart >= filterStart && annStart <= filterEnd) ||
-                        (annEnd >= filterStart && annEnd <= filterEnd) ||
-                        (annStart <= filterStart && annEnd >= filterEnd);
-                } else if (dateRange.startDate) {
-                    const filterStart = new Date(dateRange.startDate);
-                    return annEnd >= filterStart;
-                } else if (dateRange.endDate) {
-                    const filterEnd = new Date(dateRange.endDate);
-                    return annStart <= filterEnd;
-                }
-                return true;
-            });
         }
 
         // 排序邏輯 - 所有公告都按開始日期降序（最新在上）
@@ -146,8 +146,6 @@ function AnnouncementsPage() {
         return filtered;
     };
 
-    // 移除作者列表函數（不再需要）
-
     const handleOpenModal = () => {
         setIsEditing(false);
         setEditingId(null);
@@ -156,40 +154,59 @@ function AnnouncementsPage() {
             content: '',
             start_date: '',
             end_date: '',
-            announcer: '',
+            created_by: '',
             announcement_type: activeTab === 'recurring' ? 'routine' : 'normal',
         });
-        setSelectedUser(null);
         setShowModal(true);
+    };
+
+    // 格式化日期為 YYYY-MM-DD
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
     const handleEdit = (announcement) => {
         setIsEditing(true);
         setEditingId(announcement.id);
+        // 優先讀取 createby，兼容 created_by 和 announcer
+        const creator = announcement.createby || announcement.created_by || announcement.announcer || '';
+
         setFormData({
             title: extractTitle(announcement.content),
             content: announcement.content,
-            start_date: announcement.start_date,
-            end_date: announcement.end_date,
-            announcer: announcement.announcer || '',
+            start_date: formatDateForInput(announcement.start_date),
+            end_date: formatDateForInput(announcement.end_date),
+            created_by: creator,
             announcement_type: announcement.announcement_type,
         });
         setShowModal(true);
     };
 
     const handleSubmit = async () => {
-        if (!formData.content || !formData.start_date || !formData.end_date) {
-            alert('請填寫公告內容、開始日期和結束日期');
+        if (!formData.content) {
+            alert('請填寫公告內容');
             return;
+        }
+
+        if (formData.announcement_type !== 'routine') {
+            if (!formData.start_date || !formData.end_date) {
+                alert('請填寫開始日期和結束日期');
+                return;
+            }
         }
 
         try {
             const submitData = {
                 content: formData.content,
-                startDate: formData.start_date,  // 後端期望駝峰式
-                endDate: formData.end_date,      // 後端期望駝峰式
-                announcer: formData.announcer,
-                announcementType: formData.announcement_type,  // 後端期望駝峰式
+                startDate: formData.start_date,
+                endDate: formData.end_date,
+                createby: formData.created_by, // Send as createby
+                announcementType: formData.announcement_type,
             };
 
             if (isEditing) {
@@ -226,15 +243,13 @@ function AnnouncementsPage() {
         return `${startDate.toLocaleDateString('zh-TW', formatOptions)} ~ ${endDate.toLocaleDateString('zh-TW', formatOptions)}`;
     };
 
+    const handleUserSelect = (userName) => {
+        setFormData({ ...formData, created_by: userName });
+        setShowUserDropdown(false);
+    };
+
     if (loading) {
-        return (
-            <div className="page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
-                </div>
-            </div>
-        );
+        return <TableSkeleton />;
     }
 
     const filteredAnnouncements = getFilteredAnnouncements();
@@ -260,20 +275,6 @@ function AnnouncementsPage() {
                             <Icon name="add" size={18} />
                             新增公告
                         </Button>
-
-                        <input
-                            type="date"
-                            className="announcements-filter-select"
-                            placeholder="Date Range"
-                            value={dateRange.startDate}
-                            onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-                        />
-                        <input
-                            type="date"
-                            className="announcements-filter-select"
-                            value={dateRange.endDate}
-                            onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                        />
                     </div>
                 </div>
 
@@ -327,6 +328,7 @@ function AnnouncementsPage() {
                                     const status = getAnnouncementStatus(ann);
                                     let statusClass = 'default';
                                     let statusText = '';
+                                    const creatorName = ann.createby || ann.created_by || ann.announcer || '-';
 
                                     if (status === 'routine') { statusClass = 'active'; statusText = '例行'; }
                                     else if (status === 'pending') { statusClass = 'warning'; statusText = '未開始'; }
@@ -345,7 +347,7 @@ function AnnouncementsPage() {
                                                     {formatDateRange(ann.start_date, ann.end_date)}
                                                 </div>
                                             </td>
-                                            <td>{ann.announcer || '-'}</td>
+                                            <td>{creatorName}</td>
                                             <td>
                                                 <div className="announcement-actions">
                                                     <button
@@ -384,6 +386,7 @@ function AnnouncementsPage() {
                 onClose={() => setShowModal(false)}
                 title={isEditing ? '編輯公告' : '新增公告'}
                 size="lg"
+                closeOnOverlayClick={false}
             >
                 <div className="announcement-form">
                     {/* 類型切換 */}
@@ -406,8 +409,6 @@ function AnnouncementsPage() {
                             </button>
                         </div>
                     </div>
-
-                    {/* 移除標題欄位，僅保留內容欄位 */}
 
                     {/* 內容 */}
                     <div className="announcement-form-group">
@@ -440,14 +441,63 @@ function AnnouncementsPage() {
                         </div>
                     </div>
 
-                    {/* 建立人 */}
-                    <div className="announcement-form-group">
+                    {/* 建立人 (下拉單選) */}
+                    <div className="announcement-form-group" ref={dropdownRef}>
                         <label className="announcement-form-label">建立人</label>
                         <div
-                            className={`announcement-user-select ${!formData.announcer ? 'placeholder' : ''}`}
-                            onClick={() => setShowUserPicker(true)}
+                            className={`announcement-user-select ${!formData.created_by ? 'placeholder' : ''}`}
+                            onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            style={{ position: 'relative', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                         >
-                            {formData.announcer || '請選擇建立人'}
+                            <span>{formData.created_by || '請選擇建立人'}</span>
+                            <Icon name={showUserDropdown ? "chevron-up" : "chevron-down"} size={16} />
+
+                            {/* 下拉選單 - 改為向上展開避免被遮擋 */}
+                            {showUserDropdown && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '100%', // 向上展開
+                                    left: 0,
+                                    right: 0,
+                                    marginBottom: '4px', // 調整 margin 方向
+                                    backgroundColor: 'white',
+                                    borderRadius: 'var(--radius-md)',
+                                    boxShadow: '0 -4px 12px rgba(0,0,0,0.15)', // 調整陰影方向
+                                    zIndex: 100,
+                                    maxHeight: '200px', // 稍微縮小高度以防頂部溢出
+                                    overflowY: 'auto',
+                                    border: '1px solid #e0e0e0',
+                                    padding: '4px 0',
+                                    color: '#333'
+                                }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {users.length > 0 ? (
+                                        users.map(user => (
+                                            <div
+                                                key={user.id}
+                                                onClick={() => handleUserSelect(user.full_name)}
+                                                style={{
+                                                    padding: '10px 16px',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: formData.created_by === user.full_name ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
+                                                    transition: 'background-color 0.2s',
+                                                    color: formData.created_by === user.full_name ? 'var(--color-primary)' : 'var(--color-text)',
+                                                    fontWeight: formData.created_by === user.full_name ? 600 : 400
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = formData.created_by === user.full_name ? 'rgba(46, 125, 50, 0.12)' : '#f5f5f5'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = formData.created_by === user.full_name ? 'rgba(46, 125, 50, 0.08)' : 'transparent'}
+                                            >
+                                                {user.full_name}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: '12px', textAlign: 'center', color: '#999' }}>
+                                            無使用者資料
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -462,17 +512,6 @@ function AnnouncementsPage() {
                     </div>
                 </div>
             </Modal>
-
-            {/* 使用者選擇器 */}
-            <UserPicker
-                visible={showUserPicker}
-                selectedUser={selectedUser}
-                onSelect={(user) => {
-                    setSelectedUser(user);
-                    setFormData({ ...formData, announcer: user.full_name });
-                }}
-                onClose={() => setShowUserPicker(false)}
-            />
         </div>
     );
 }

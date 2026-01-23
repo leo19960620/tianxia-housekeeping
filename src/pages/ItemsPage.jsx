@@ -4,6 +4,7 @@ import '../styles/ModernTable.css';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
+import TableSkeleton from '../components/common/TableSkeleton';
 import { ITEM_ICONS } from '../utils/constants';
 import './ItemsPage.css';
 
@@ -71,14 +72,7 @@ function ItemsPage() {
     };
 
     if (loading) {
-        return (
-            <div className="page">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>載入中...</p>
-                </div>
-            </div>
-        );
+        return <TableSkeleton />;
     }
 
     return (

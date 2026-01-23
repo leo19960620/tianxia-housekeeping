@@ -1,10 +1,10 @@
 import './Modal.css';
 
-function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+function Modal({ isOpen, onClose, title, children, size = 'md', closeOnOverlayClick = true }) {
     if (!isOpen) return null;
 
     const handleOverlayClick = (e) => {
-        if (e.target === e.currentTarget) {
+        if (e.target === e.currentTarget && closeOnOverlayClick) {
             onClose();
         }
     };

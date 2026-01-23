@@ -1,0 +1,160 @@
+/* 共用 Skeleton 樣式 */
+
+@keyframes common-skeleton-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.common-skeleton-base {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+.common-skeleton-base.dark {
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+}
+
+/* 容器樣式 */
+.common-skeleton-container {
+    padding: 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 標題與 Header */
+.common-skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.common-skeleton-title {
+    width: 150px;
+    height: 32px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 6px;
+}
+
+.common-skeleton-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.common-skeleton-button {
+    width: 100px;
+    height: 38px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Search Bar & Filters */
+.common-skeleton-filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.common-skeleton-search {
+    flex: 1;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #f5f5f5 25%, #ebebeb 50%, #f5f5f5 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+    max-width: 300px;
+}
+
+/* 表格樣式 */
+.common-skeleton-table-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+}
+
+.common-skeleton-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 16px;
+}
+
+.common-skeleton-row:last-child {
+    border-bottom: none;
+}
+
+.common-skeleton-cell {
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f5f5f5 25%, #ebebeb 50%, #f5f5f5 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Dashboard Grid */
+.common-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.common-skeleton-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.common-skeleton-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.common-skeleton-text-lg {
+    height: 24px;
+    width: 70%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.common-skeleton-text-md {
+    height: 16px;
+    width: 90%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.common-skeleton-text-sm {
+    height: 12px;
+    width: 50%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f5f5f5 25%, #ebebeb 50%, #f5f5f5 75%);
+    background-size: 200% 100%;
+    animation: common-skeleton-shimmer 1.5s ease-in-out infinite;
+}
