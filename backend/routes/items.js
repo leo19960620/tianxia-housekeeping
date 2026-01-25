@@ -168,4 +168,119 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/inventory-records
+ * 查詢備品歷史紀錄（支援篩選與分頁）
+ */
+router.get('/inventory-records', async (req, res) => {
+    try {
+        const {
+            startDate,
+            endDate,
+            status,
+            itemType,
+            roomNumber,
+            page = 1,
+            limit = 50
+        } = req.query;
+
+        // 建立 WHERE 條件
+        const conditions = [];
+        const params = [];
+        let paramIndex = 1;
+
+        // 日期範圍篩選
+        if (startDate) {
+            conditions.push(`ir.created_at >= $${paramIndex}::date`);
+            params.push(startDate);
+            paramIndex++;
+        }
+        if (endDate) {
+            conditions.push(`ir.created_at < ($${paramIndex}::date + INTERVAL '1 day')`);
+            params.push(endDate);
+            paramIndex++;
+        }
+
+        // 狀態篩選
+        if (status) {
+            conditions.push(`ir.status = $${paramIndex}`);
+            params.push(status);
+            paramIndex++;
+        }
+
+        // 備品名稱模糊搜尋
+        if (itemType) {
+            conditions.push(`ir.item_type ILIKE $${paramIndex}`);
+            params.push(`%${itemType}%`);
+            paramIndex++;
+        }
+
+        // 房號模糊搜尋
+        if (roomNumber) {
+            conditions.push(`ir.room_number ILIKE $${paramIndex}`);
+            params.push(`%${roomNumber}%`);
+            paramIndex++;
+        }
+
+        const whereClause = conditions.length > 0
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
+
+        // 計算總筆數
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM inventory_records ir
+            ${whereClause}
+        `;
+        const countResult = await query(countSql, params);
+        const totalRecords = parseInt(countResult.rows[0].total);
+
+        // 計算分頁
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const offset = (pageNum - 1) * limitNum;
+        const totalPages = Math.ceil(totalRecords / limitNum);
+
+        // 查詢資料
+        const dataSql = `
+            SELECT 
+                ir.key_id,
+                ir.handover_id,
+                ir.status,
+                ir.category,
+                ir.item_type,
+                ir.room_number,
+                ir.quantity,
+                ir.created_at,
+                h.shift,
+                h.staff_name
+            FROM inventory_records ir
+            LEFT JOIN handovers h ON ir.handover_id = h.id
+            ${whereClause}
+            ORDER BY ir.created_at DESC
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `;
+        const dataResult = await query(dataSql, [...params, limitNum, offset]);
+
+        res.json({
+            success: true,
+            data: {
+                records: dataResult.rows,
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages: totalPages,
+                    totalRecords: totalRecords,
+                    limit: limitNum
+                }
+            }
+        });
+    } catch (error) {
+        console.error('查詢備品歷史紀錄錯誤:', error);
+        res.status(500).json({
+            success: false,
+            message: '伺服器錯誤'
+        });
+    }
+});
+
 export default router;

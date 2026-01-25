@@ -13,4 +13,8 @@ export const itemAPI = {
     update: (id, data) => api.put(`/items/${id}`, data),
 
     delete: (id) => api.delete(`/items/${id}`),
+
+    // 查詢備品歷史紀錄
+    getInventoryHistory: (params) => api.get('/items/inventory-records', { params }),
 };
+
