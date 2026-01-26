@@ -50,15 +50,17 @@ function ItemsPage() {
         if (activeTab === 'list') {
             loadData();
         } else {
-            loadHistoryRecords();
+            // 切換到歷史紀錄時載入第一頁
+            loadHistoryRecords(1);
         }
     }, [activeTab]);
 
+    // 只監聽頁碼變化（分頁導航時使用）
     useEffect(() => {
-        if (activeTab === 'history') {
-            loadHistoryRecords();
+        if (activeTab === 'history' && pagination.currentPage > 1) {
+            loadHistoryRecords(pagination.currentPage);
         }
-    }, [pagination.currentPage, historyFilters]);
+    }, [pagination.currentPage]);
 
     // ===================
     // 備品清單功能
@@ -142,19 +144,58 @@ function ItemsPage() {
     };
 
     const handleFilterChange = (key, value) => {
-        setHistoryFilters({ ...historyFilters, [key]: value });
-        setPagination({ ...pagination, currentPage: 1 }); // 重置頁碼
+        const newFilters = { ...historyFilters, [key]: value };
+        setHistoryFilters(newFilters);
+        setPagination({ ...pagination, currentPage: 1 });
+
+        // 直接觸發查詢，使用新的篩選條件
+        setTimeout(() => {
+            loadHistoryRecordsWithFilters(newFilters, 1);
+        }, 0);
     };
 
     const handleResetFilters = () => {
-        setHistoryFilters({
+        const emptyFilters = {
             startDate: '',
             endDate: '',
             status: '',
             itemType: '',
             roomNumber: '',
-        });
+        };
+        setHistoryFilters(emptyFilters);
         setPagination({ ...pagination, currentPage: 1 });
+
+        // 直接觸發查詢，使用空的篩選條件
+        setTimeout(() => {
+            loadHistoryRecordsWithFilters(emptyFilters, 1);
+        }, 0);
+    };
+
+    // 使用特定篩選條件載入資料
+    const loadHistoryRecordsWithFilters = async (filters, page) => {
+        try {
+            setHistoryLoading(true);
+            const params = {
+                ...filters,
+                page,
+                limit: pagination.limit,
+            };
+
+            // 移除空值
+            Object.keys(params).forEach(key => {
+                if (!params[key]) delete params[key];
+            });
+
+            const res = await itemAPI.getInventoryHistory(params);
+            if (res.success) {
+                setHistoryRecords(res.data.records);
+                setPagination(res.data.pagination);
+            }
+        } catch (error) {
+            console.error('載入歷史紀錄失敗:', error);
+        } finally {
+            setHistoryLoading(false);
+        }
     };
 
     const handlePageChange = (newPage) => {
@@ -175,29 +216,34 @@ function ItemsPage() {
     return (
         <div className="page">
             <div className="page-content">
-                <div className="table-header-row">
-                    <h1 className="page-title">備品管理</h1>
-                    {activeTab === 'list' && (
-                        <Button onClick={() => setShowModal(true)}>+ 新增備品</Button>
-                    )}
-                </div>
+                {/* Tab 切換與操作區 */}
+                <div className="items-tabs-container">
+                    <div className="items-tabs">
+                        <button
+                            className={`items-tab ${activeTab === 'list' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('list')}
+                        >
+                            <Icon name="cube-outline" size={18} />
+                            備品清單
+                        </button>
+                        <button
+                            className={`items-tab ${activeTab === 'history' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('history')}
+                        >
+                            <Icon name="time-outline" size={18} />
+                            歷史紀錄
+                        </button>
+                    </div>
 
-                {/* Tab 切換 */}
-                <div className="items-tabs">
-                    <button
-                        className={`items-tab ${activeTab === 'list' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('list')}
-                    >
-                        <Icon name="cube-outline" size={18} />
-                        備品清單
-                    </button>
-                    <button
-                        className={`items-tab ${activeTab === 'history' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('history')}
-                    >
-                        <Icon name="time-outline" size={18} />
-                        歷史紀錄
-                    </button>
+                    {/* 右側操作按鈕 */}
+                    <div className="items-actions">
+                        {activeTab === 'list' && (
+                            <Button onClick={() => setShowModal(true)}>
+                                <Icon name="add" size={18} />
+                                新增備品
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* 備品清單 Tab */}
@@ -339,7 +385,6 @@ function ItemsPage() {
                                             <th>數量</th>
                                             <th>員工</th>
                                             <th>班別</th>
-                                            <th>操作</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -365,16 +410,6 @@ function ItemsPage() {
                                                 <td>{record.quantity}</td>
                                                 <td>{record.staff_name || '-'}</td>
                                                 <td>{record.shift || '-'}</td>
-                                                <td>
-                                                    <button
-                                                        className="action-btn view"
-                                                        onClick={() => handleViewHandover(record.handover_id)}
-                                                        title="查看交接紀錄"
-                                                    >
-                                                        <Icon name="eye-outline" size={14} />
-                                                        查看
-                                                    </button>
-                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

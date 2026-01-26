@@ -434,250 +434,238 @@
     padding-bottom: var(--spacing-sm);
 }
 
-.room-stats-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
-}
-
-.room-stat-item {
-    background: var(--color-background);
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-sm);
-    display: flex;
-    gap: var(--spacing-sm);
-}
-
-.room-number {
-    font-weight: 600;
-}
-
-/* Priority Card */
-.priority-list {
+/* 月統計儀表板佈局 */
+.monthly-dashboard {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.priority-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: white;
-}
-
-.priority-badge {
-    color: white;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-sm);
-}
-
-/* 月統計重新設計樣式 */
-.monthly-tab-content {
-    background-color: var(--color-background);
-    /* 整個背景偏灰 */
-    padding: var(--spacing-md);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    border: none;
-    /* 移除原本的邊框 */
-}
-
-/* 乾淨的篩選列 */
-.filter-row-clean {
-    display: flex;
     gap: var(--spacing-lg);
+}
+
+.filter-section {
     background: white;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    align-items: center;
-    width: fit-content;
-}
-
-.filter-group {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-lg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.filter-group label {
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+/* 統計概覽區塊 (上方) */
+.stats-overview-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
 }
 
-.clean-input,
-.clean-select {
-    border: 1px solid #ddd;
-    /* 改用淺灰邊框 */
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    background: white;
-    /* 改為白色背景 */
-    font-size: var(--font-size-sm);
-    transition: border-color 0.2s;
-}
-
-.clean-input:focus,
-.clean-select:focus {
-    border-color: var(--color-primary);
-    outline: none;
-}
-
-/* 佈局 */
-.monthly-layout {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-/* 圖表區塊 */
-.chart-section-card {
+.overview-card {
     background: white;
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    height: 100%;
+    transition: transform 0.2s ease;
 }
 
-.chart-section-card h3 {
-    width: 100%;
-    margin: 0 0 var(--spacing-lg) 0;
+.overview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-title {
     font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-}
-
-.chart-content {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-    justify-content: center;
-    width: 100%;
-}
-
-/* 甜甜圈圖 */
-.donut-chart {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    position: relative;
-    /* Background set inline */
-}
-
-.donut-inner-circle {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    background: white;
-    border-radius: 50%;
-    top: 25%;
-    left: 25%;
-}
-
-/* 圖例 */
-.chart-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 150px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--font-size-sm);
-}
-
-.legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-}
-
-.legend-label {
-    font-weight: 600;
-    color: var(--color-text-secondary);
-}
-
-.legend-value {
-    font-weight: 500;
-    color: var(--color-text-primary);
-}
-
-/* 樓層統計網格 */
-.floor-stats-grid-layout {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    /* 兩欄 */
-    gap: var(--spacing-md);
-}
-
-.floor-stat-card-clean {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.floor-head-clean {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: var(--spacing-sm);
-}
-
-.floor-title {
-    font-size: var(--font-size-md);
     font-weight: 700;
     color: var(--color-text-primary);
-}
-
-.floor-total {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-}
-
-.floor-rooms-list {
+    margin: 0 0 var(--spacing-lg) 0;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-background);
+}
+
+/* 優先順序微件 */
+.priority-widget {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-sm);
 }
 
-.room-item-clean {
-    background: #f0f4f1;
-    /* 改為極淺的綠色背景，呼應主色調 */
-    padding: 6px 12px;
-    border-radius: 4px;
+.priority-item-row {
     display: flex;
-    gap: 8px;
     align-items: center;
-    font-size: var(--font-size-sm);
-    border: 1px solid transparent;
-    /* 移除明顯邊框 */
-    color: #2c4233;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    border-left: 4px solid #ccc;
 }
 
-.room-num {
+.priority-item-row.high {
+    border-left-color: var(--color-danger);
+    background: #fff5f5;
+}
+
+.priority-item-row.medium {
+    border-left-color: var(--color-warning);
+    background: #fffbf0;
+}
+
+.priority-info-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.priority-floor-badge {
+    background: white;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    min-width: 40px;
+    text-align: center;
+}
+
+/* 樓層詳細區塊 (下方) */
+.floor-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.section-subtitle {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: var(--spacing-md) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.floors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.modern-floor-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-light);
+    transition: all 0.2s ease;
+}
+
+.modern-floor-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--color-primary-light);
+}
+
+.floor-card-header {
+    background: linear-gradient(to right, #f8f9fa, #ffffff);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floor-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.floor-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-primary-lighter);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floor-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+.floor-stats-badge {
+    background: var(--color-text-primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #3d5a45;
 }
 
-.room-val {
-    color: #666;
-    font-size: 13px;
+.floor-card-body {
+    padding: var(--spacing-lg);
+}
+
+.room-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.room-chip {
+    padding: 6px 12px;
+    background: var(--color-background);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+}
+
+.room-chip:hover {
+    background: white;
+    border-color: var(--color-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.room-chip .count {
+    background: #e0e0e0;
+    color: #424242;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* 之前殘留的樣式清理與共用類別 */
+.chart-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-md);
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--color-text-secondary);
 }

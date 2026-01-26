@@ -22,6 +22,7 @@ function HandoverDetailPage() {
     const [showOzoneModal, setShowOzoneModal] = useState(false);
     const [showFloorSelector, setShowFloorSelector] = useState(false);
     const [floorSelectorTarget, setFloorSelectorTarget] = useState('OZONE'); // 'OZONE' or 'INVENTORY'
+    const [editingOzoneId, setEditingOzoneId] = useState(null); // 正在編輯的臭氧紀錄 ID
 
     // 備品相關
     const [items, setItems] = useState([]);
@@ -291,12 +292,35 @@ function HandoverDetailPage() {
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
 
+        setEditingOzoneId(null); // 清除編輯狀態
         setOzoneForm({
             floor: '',
             roomNumbers: [],
             startTime: currentDateTime,
             durationMinutes: 30,
             notes: '',
+        });
+        setShowOzoneModal(true);
+    };
+
+    const openEditOzoneModal = (record) => {
+        // 將 ISO 時間轉換為本地 datetime-local 格式 (修正時區問題)
+        let startTime = '';
+        if (record.start_time) {
+            const date = new Date(record.start_time);
+            // 修正：手動調整時區偏移，確保轉換為本地時間字串
+            const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+            const localDate = new Date(date.getTime() - offsetMs);
+            startTime = localDate.toISOString().slice(0, 16);
+        }
+
+        setEditingOzoneId(record.key_id);
+        setOzoneForm({
+            floor: record.floor,
+            roomNumbers: record.room_numbers || [],
+            startTime: startTime,
+            durationMinutes: record.duration_minutes || 30,
+            notes: record.notes || '',
         });
         setShowOzoneModal(true);
     };
@@ -335,32 +359,105 @@ function HandoverDetailPage() {
             return;
         }
 
-        try {
-            await handoverAPI.addOzone(id, {
-                floor: ozoneForm.floor,
-                roomNumbers: ozoneForm.roomNumbers,
-                startTime: ozoneForm.startTime,
-                durationMinutes: ozoneForm.durationMinutes,
-                notes: ozoneForm.notes,
+        const ozoneData = {
+            floor: ozoneForm.floor,
+            roomNumbers: ozoneForm.roomNumbers,
+            startTime: ozoneForm.startTime,
+            durationMinutes: ozoneForm.durationMinutes,
+            notes: ozoneForm.notes,
+        };
+
+        // 關閉 Modal 並清除編輯狀態（立即反應）
+        setShowOzoneModal(false);
+        const currentEditingId = editingOzoneId;
+        setEditingOzoneId(null);
+
+        if (currentEditingId) {
+            // === 編輯模式：樂觀更新 ===
+            // 1. 先更新本地狀態（立即顯示）
+            const previousRecords = handover.ozone_records;
+            const updatedRecords = handover.ozone_records.map(record => {
+                if (record.key_id === currentEditingId) {
+                    // 計算結束時間
+                    const duration = ozoneData.durationMinutes || 30;
+                    const start = new Date(ozoneData.startTime);
+                    const end = new Date(start.getTime() + duration * 60000);
+
+                    return {
+                        ...record,
+                        floor: ozoneData.floor,
+                        room_numbers: ozoneData.roomNumbers,
+                        start_time: ozoneData.startTime,
+                        duration_minutes: ozoneData.durationMinutes,
+                        end_time: end.toISOString(),
+                        notes: ozoneData.notes,
+                    };
+                }
+                return record;
             });
 
-            alert('臭氧記錄已新增');
-            setShowOzoneModal(false);
-            loadData();
-        } catch (error) {
-            alert(error.message || '新增失敗');
+            setHandover({
+                ...handover,
+                ozone_records: updatedRecords,
+            });
+
+            // 2. 再呼叫 API 更新資料庫
+            try {
+                await handoverAPI.updateOzone(currentEditingId, ozoneData);
+                // 成功後靜默完成，不需要 alert 和重新載入
+            } catch (error) {
+                // 如果 API 失敗，回滾到原本的狀態
+                setHandover({
+                    ...handover,
+                    ozone_records: previousRecords,
+                });
+                alert(error.message || '更新失敗，已恢復原始資料');
+            }
+        } else {
+            // === 新增模式 ===
+            try {
+                // 新增時仍需要等待 API 回應以取得完整資料
+                const response = await handoverAPI.addOzone(id, ozoneData);
+
+                // 樂觀新增到本地狀態
+                if (response.success && response.data) {
+                    setHandover({
+                        ...handover,
+                        ozone_records: [...(handover.ozone_records || []), response.data],
+                    });
+                } else {
+                    // 如果沒有返回資料，則重新載入
+                    loadData();
+                }
+            } catch (error) {
+                alert(error.message || '新增失敗');
+            }
         }
     };
 
     const deleteOzoneRecord = async (ozoneId) => {
         if (!confirm('確定要刪除此臭氧記錄嗎?')) return;
 
+        // 樂觀刪除：先從本地狀態移除
+        const previousRecords = handover.ozone_records;
+        const updatedRecords = handover.ozone_records.filter(record => record.key_id !== ozoneId);
+
+        setHandover({
+            ...handover,
+            ozone_records: updatedRecords,
+        });
+
+        // 再呼叫 API 刪除
         try {
             await handoverAPI.deleteOzone(ozoneId);
-            alert('已刪除');
-            loadData();
+            // 成功後靜默完成，不需要 alert
         } catch (error) {
-            alert(error.message || '刪除失敗');
+            // 如果 API 失敗，回滾到原本的狀態
+            setHandover({
+                ...handover,
+                ozone_records: previousRecords,
+            });
+            alert(error.message || '刪除失敗，已恢復資料');
         }
     };
 
@@ -720,14 +817,24 @@ function HandoverDetailPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <button
-                                                    className="delete-btn-inline"
-                                                    onClick={() => deleteOzoneRecord(record.id)}
-                                                    title="刪除"
-                                                    style={{ color: '#ef5350' }}
-                                                >
-                                                    <Icon name="trash-outline" size={18} />
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flex: 'none' }}>
+                                                    <button
+                                                        className="delete-btn-inline"
+                                                        onClick={() => openEditOzoneModal(record)}
+                                                        title="編輯"
+                                                        style={{ color: '#1976d2' }}
+                                                    >
+                                                        <Icon name="create-outline" size={18} />
+                                                    </button>
+                                                    <button
+                                                        className="delete-btn-inline"
+                                                        onClick={() => deleteOzoneRecord(record.key_id)}
+                                                        title="刪除"
+                                                        style={{ color: '#ef5350' }}
+                                                    >
+                                                        <Icon name="trash-outline" size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -960,8 +1067,11 @@ function HandoverDetailPage() {
             {/* 臭氧Modal */}
             <Modal
                 isOpen={showOzoneModal}
-                onClose={() => setShowOzoneModal(false)}
-                title="新增臭氧紀錄"
+                onClose={() => {
+                    setShowOzoneModal(false);
+                    setEditingOzoneId(null);
+                }}
+                title={editingOzoneId ? "編輯臭氧紀錄" : "新增臭氧紀錄"}
                 size="lg"
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
@@ -1076,11 +1186,14 @@ function HandoverDetailPage() {
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
-                        <Button variant="secondary" fullWidth onClick={() => setShowOzoneModal(false)}>
+                        <Button variant="secondary" fullWidth onClick={() => {
+                            setShowOzoneModal(false);
+                            setEditingOzoneId(null);
+                        }}>
                             取消
                         </Button>
                         <Button fullWidth onClick={confirmOzoneRecord}>
-                            確認新增
+                            {editingOzoneId ? '確認更新' : '確認新增'}
                         </Button>
                     </div>
                 </div>

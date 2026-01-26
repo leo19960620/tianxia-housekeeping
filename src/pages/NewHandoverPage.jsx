@@ -25,6 +25,7 @@ function NewHandoverPage() {
     const [showInventoryModal, setShowInventoryModal] = useState(false);
     const [showOzoneModal, setShowOzoneModal] = useState(false);
     const [showFloorSelector, setShowFloorSelector] = useState(false);
+    const [editingOzoneIndex, setEditingOzoneIndex] = useState(null); // 正在編輯的臭氧紀錄索引
     const dropdownRef = useRef(null);
 
     // 表單資料
@@ -235,11 +236,23 @@ function NewHandoverPage() {
 
     // === 臭氧相關 ===
     const openOzoneModal = () => {
+        setEditingOzoneIndex(null); // 清除編輯狀態
         setOzoneForm({
             floor: '',
             roomNumbers: [],
             startTime: getCurrentLocalTime(),  // 使用當前本地時間 (UTC+8)
             durationMinutes: 30,
+        });
+        setShowOzoneModal(true);
+    };
+
+    const openEditOzoneModal = (record, index) => {
+        setEditingOzoneIndex(index);
+        setOzoneForm({
+            floor: record.floor,
+            roomNumbers: record.roomNumbers || [],
+            startTime: record.startTime,
+            durationMinutes: record.durationMinutes || 30,
         });
         setShowOzoneModal(true);
     };
@@ -270,20 +283,37 @@ function NewHandoverPage() {
             return;
         }
 
-        const newRecord = {
-            floor: ozoneForm.floor,
-            roomNumbers: ozoneForm.roomNumbers,
-            startTime: ozoneForm.startTime,
-            durationMinutes: ozoneForm.durationMinutes,
-            _tempId: Date.now(),
-        };
-
-        setFormData({
-            ...formData,
-            ozoneRecords: [...formData.ozoneRecords, newRecord],
-        });
+        if (editingOzoneIndex !== null) {
+            // 編輯模式：更新現有紀錄
+            const updatedRecords = [...formData.ozoneRecords];
+            updatedRecords[editingOzoneIndex] = {
+                floor: ozoneForm.floor,
+                roomNumbers: ozoneForm.roomNumbers,
+                startTime: ozoneForm.startTime,
+                durationMinutes: ozoneForm.durationMinutes,
+                _tempId: updatedRecords[editingOzoneIndex]._tempId, // 保留原本的 ID
+            };
+            setFormData({
+                ...formData,
+                ozoneRecords: updatedRecords,
+            });
+        } else {
+            // 新增模式：建立新紀錄
+            const newRecord = {
+                floor: ozoneForm.floor,
+                roomNumbers: ozoneForm.roomNumbers,
+                startTime: ozoneForm.startTime,
+                durationMinutes: ozoneForm.durationMinutes,
+                _tempId: Date.now(),
+            };
+            setFormData({
+                ...formData,
+                ozoneRecords: [...formData.ozoneRecords, newRecord],
+            });
+        }
 
         setShowOzoneModal(false);
+        setEditingOzoneIndex(null);
     };
 
     const removeOzoneRecord = (index) => {
@@ -516,9 +546,14 @@ function NewHandoverPage() {
                                                     ({record.roomNumbers.length} 間)
                                                 </span>
                                             </div>
-                                            <button className="delete-button" onClick={() => removeOzoneRecord(index)}>
-                                                <Icon name="trash-outline" size={16} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                                                <button className="delete-button" onClick={() => openEditOzoneModal(record, index)} title="編輯" style={{ color: '#1976d2' }}>
+                                                    <Icon name="create-outline" size={16} />
+                                                </button>
+                                                <button className="delete-button" onClick={() => removeOzoneRecord(index)} title="刪除">
+                                                    <Icon name="trash-outline" size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="record-text">
                                             {record.roomNumbers.sort().join('、') || '無房號'}
@@ -786,8 +821,11 @@ function NewHandoverPage() {
             {/* 臭氧Modal */}
             <Modal
                 isOpen={showOzoneModal}
-                onClose={() => setShowOzoneModal(false)}
-                title="新增臭氧紀錄"
+                onClose={() => {
+                    setShowOzoneModal(false);
+                    setEditingOzoneIndex(null);
+                }}
+                title={editingOzoneIndex !== null ? "編輯臭氧紀錄" : "新增臭氧紀錄"}
                 size="lg"
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
@@ -880,11 +918,14 @@ function NewHandoverPage() {
 
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
-                        <Button variant="secondary" fullWidth onClick={() => setShowOzoneModal(false)}>
+                        <Button variant="secondary" fullWidth onClick={() => {
+                            setShowOzoneModal(false);
+                            setEditingOzoneIndex(null);
+                        }}>
                             取消
                         </Button>
                         <Button fullWidth onClick={confirmOzoneRecord}>
-                            確認新增
+                            {editingOzoneIndex !== null ? '確認更新' : '確認新增'}
                         </Button>
                     </div>
                 </div>

@@ -211,7 +211,21 @@
     border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all var(--transition-base);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/* 臭氧卡片淡入動畫 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .ozone-card:hover {
@@ -244,6 +258,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    transition: all 0.2s ease;
 }
 
 .room-count {
@@ -255,6 +270,7 @@
     padding: 2px 8px;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(186, 230, 253, 0.3);
+    transition: all 0.2s ease;
 }
 
 .ozone-rooms {
@@ -266,6 +282,7 @@
     display: flex;
     align-items: flex-start;
     gap: 6px;
+    transition: all 0.2s ease;
 }
 
 .ozone-time {
@@ -278,6 +295,7 @@
     padding: 0;
     background: transparent;
     width: auto;
+    transition: all 0.2s ease;
 }
 
 .duration-badge {
@@ -289,6 +307,7 @@
     font-weight: 500;
     margin-left: 8px;
     border: 1px solid rgba(186, 230, 253, 0.3);
+    transition: all 0.2s ease;
 }
 
 .ozone-notes {
@@ -300,6 +319,7 @@
     background: rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     border-left: 3px solid #60a5fa;
+    transition: all 0.2s ease;
 }
 
 /* 交班事項卡片 */
