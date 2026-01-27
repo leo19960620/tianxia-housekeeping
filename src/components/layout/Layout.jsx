@@ -1,10 +1,24 @@
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import './Layout.css';
 
+// Lazy load ParkingPage locally since we render it manually
+const ParkingPage = lazy(() => import('../../pages/ParkingPage'));
+
 function Layout() {
     const location = useLocation();
+    const [hasVisitedParking, setHasVisitedParking] = useState(false);
+
+    // Check if current page is parking
+    const isParkingPage = location.pathname === '/parking';
+
+    useEffect(() => {
+        if (isParkingPage && !hasVisitedParking) {
+            setHasVisitedParking(true);
+        }
+    }, [isParkingPage, hasVisitedParking]);
 
     // 根據路由設置頁面標題
     const getPageTitle = () => {
@@ -28,8 +42,43 @@ function Layout() {
             <Sidebar />
             <div className="layout-main">
                 <Topbar title={getPageTitle()} />
-                <main className="layout-content">
-                    <Outlet />
+                <main
+                    className="layout-content"
+                    style={{
+                        position: 'relative',
+                        overflowY: isParkingPage ? 'hidden' : undefined,
+                        padding: isParkingPage ? 0 : undefined
+                    }}
+                >
+
+                    {/* Persistent Parking Page */}
+                    {(hasVisitedParking || isParkingPage) && (
+                        <div
+                            style={{
+                                visibility: isParkingPage ? 'visible' : 'hidden',
+                                height: isParkingPage ? '100%' : '0px',
+                                width: '100%',
+                                position: isParkingPage ? 'relative' : 'absolute',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <Suspense fallback={<div className="loading-spinner"></div>}>
+                                <ParkingPage />
+                            </Suspense>
+                        </div>
+                    )}
+
+                    {/* Standard Router Outlet */}
+                    <div
+                        style={{
+                            display: isParkingPage ? 'none' : 'block',
+                            width: '100%',
+                            height: '100%'
+                        }}
+                    >
+                        <Outlet />
+                    </div>
+
                 </main>
             </div>
         </div>

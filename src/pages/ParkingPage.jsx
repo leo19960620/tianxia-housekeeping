@@ -8,12 +8,9 @@ const ParkingPage = () => {
     return (
         <div style={{
             width: '100%',
-            height: 'calc(100vh - 100px)', // 扣除 header 高度 
+            height: '100%',
             position: 'relative',
             backgroundColor: '#F8F6F3',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
         }}>
             {loading && (
                 <div style={{

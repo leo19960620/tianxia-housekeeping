@@ -15,7 +15,6 @@ const ItemsPage = lazy(() => import('./pages/ItemsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const OzoneStatsPage = lazy(() => import('./pages/OzoneStatsPage'));
 const RentalManagementPage = lazy(() => import('./pages/RentalManagementPage'));
-const ParkingPage = lazy(() => import('./pages/ParkingPage'));
 
 
 function App() {
@@ -43,7 +42,7 @@ function App() {
             <Route path="users" element={<UsersPage />} />
             <Route path="ozone-stats" element={<OzoneStatsPage />} />
             <Route path="rental-management" element={<RentalManagementPage />} />
-            <Route path="parking" element={<ParkingPage />} />
+            <Route path="parking" element={null} />
             <Route path="settings" element={<div className="page"><div className="page-header"><h1 className="page-title">系統設定</h1></div><div className="page-content"><div className="loading-container"><p>🏗️ 開發中...</p></div></div></div>} />
 
           </Route>
