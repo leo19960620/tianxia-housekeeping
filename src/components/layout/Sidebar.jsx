@@ -56,6 +56,12 @@ function Sidebar() {
             path: '/rental-management',
         },
         {
+            id: 'parking',
+            label: '停車管理',
+            icon: 'car',
+            path: '/parking',
+        },
+        {
             id: 'settings',
             label: '系統設定',
             icon: 'settings',
