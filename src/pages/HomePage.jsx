@@ -23,6 +23,7 @@ function HomePage() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
     const [expandedShiftId, setExpandedShiftId] = useState(null);
+    const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
     const scrollRef = useRef(null);
 
     useEffect(() => {
@@ -173,14 +174,28 @@ function HomePage() {
 
 
     const scroll = (direction) => {
-        if (scrollRef.current) {
+        if (scrollRef.current && generalAnnouncements.length > 0) {
             const { current } = scrollRef;
-            const scrollAmount = 300;
+            const cardWidth = current.querySelector('.announcement-card-dark')?.offsetWidth || 320;
+            const gap = 16; // 卡片間距
+            const scrollAmount = cardWidth + gap;
+
+            let newIndex = currentAnnouncementIndex;
+
             if (direction === 'left') {
-                current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                // 向左：如果在第一張，循環到最後一張
+                newIndex = currentAnnouncementIndex === 0 
+                    ? generalAnnouncements.length - 1 
+                    : currentAnnouncementIndex - 1;
             } else {
-                current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                // 向右：如果在最後一張，循環到第一張
+                newIndex = currentAnnouncementIndex === generalAnnouncements.length - 1 
+                    ? 0 
+                    : currentAnnouncementIndex + 1;
             }
+
+            setCurrentAnnouncementIndex(newIndex);
+            current.scrollTo({ left: newIndex * scrollAmount, behavior: 'smooth' });
         }
     };
 

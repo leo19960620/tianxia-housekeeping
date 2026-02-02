@@ -4,6 +4,7 @@ import { userAPI } from '../api/user';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Icon from '../components/common/Icon';
+import Toast from '../components/common/Toast';
 import TableSkeleton from '../components/common/TableSkeleton';
 import { getTodayMidnight } from '../utils/timezone';
 import '../styles/ModernTable.css';
@@ -30,6 +31,12 @@ function AnnouncementsPage() {
     const [users, setUsers] = useState([]);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Toast 通知相關
+    const [toast, setToast] = useState(null);
+
+    // 提交狀態
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         loadAnnouncements();
@@ -189,38 +196,80 @@ function AnnouncementsPage() {
 
     const handleSubmit = async () => {
         if (!formData.content) {
-            alert('請填寫公告內容');
+            setToast({ message: '請填寫公告內容', type: 'error' });
             return;
         }
 
         if (formData.announcement_type !== 'routine') {
             if (!formData.start_date || !formData.end_date) {
-                alert('請填寫開始日期和結束日期');
+                setToast({ message: '請填寫開始日期和結束日期', type: 'error' });
                 return;
             }
         }
 
+        // 防止重複提交
+        if (isSubmitting) return;
+
         try {
+            setIsSubmitting(true);
+
             const submitData = {
                 content: formData.content,
                 startDate: formData.start_date,
                 endDate: formData.end_date,
-                createby: formData.created_by, // Send as createby
+                announcer: formData.created_by,
                 announcementType: formData.announcement_type,
             };
 
             if (isEditing) {
-                await announcementAPI.update(editingId, submitData);
-                alert('公告已更新');
-            } else {
-                await announcementAPI.create(submitData);
-                alert('公告已建立');
-            }
+                // 樂觀更新：先更新本地狀態
+                const updatedAnnouncement = {
+                    id: editingId,
+                    ...submitData,
+                    start_date: submitData.startDate,
+                    end_date: submitData.endDate,
+                    announcement_type: submitData.announcementType,
+                };
 
-            setShowModal(false);
-            loadAnnouncements();
+                setAnnouncements(prev =>
+                    prev.map(ann => ann.id === editingId ? { ...ann, ...updatedAnnouncement } : ann)
+                );
+
+                // 關閉 Modal
+                setShowModal(false);
+
+                // 後台同步更新
+                await announcementAPI.update(editingId, submitData);
+
+                // 顯示成功通知
+                setToast({ message: '公告已更新', type: 'success' });
+
+                // 完全同步（在背景進行，不影響 UI）
+                loadAnnouncements();
+            } else {
+                // 新增公告：等待後端返回
+                const result = await announcementAPI.create(submitData);
+
+                // 關閉 Modal
+                setShowModal(false);
+
+                // 顯示成功通知
+                setToast({ message: '公告已建立', type: 'success' });
+
+                // 重新載入列表
+                loadAnnouncements();
+            }
         } catch (error) {
-            alert(error.message || (isEditing ? '更新失敗' : '建立失敗'));
+            // 如果更新失敗，重新載入以恢復正確狀態
+            if (isEditing) {
+                loadAnnouncements();
+            }
+            setToast({
+                message: error.message || (isEditing ? '更新失敗' : '建立失敗'),
+                type: 'error'
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -503,15 +552,33 @@ function AnnouncementsPage() {
 
                     {/* 表單按鈕 */}
                     <div className="announcement-form-actions">
-                        <Button variant="secondary" fullWidth onClick={() => setShowModal(false)}>
+                        <Button
+                            variant="secondary"
+                            fullWidth
+                            onClick={() => setShowModal(false)}
+                            disabled={isSubmitting}
+                        >
                             取消
                         </Button>
-                        <Button fullWidth onClick={handleSubmit}>
-                            {isEditing ? '更新' : '建立'}
+                        <Button
+                            fullWidth
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (isEditing ? '更新中...' : '建立中...') : (isEditing ? '更新' : '建立')}
                         </Button>
                     </div>
                 </div>
             </Modal>
+
+            {/* Toast 通知 */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }
