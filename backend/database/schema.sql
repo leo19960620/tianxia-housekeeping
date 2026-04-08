@@ -84,7 +84,7 @@ CREATE TABLE inventory_records (
 -- 建立臭氧紀錄表（樓層卡片式管理）
 CREATE TABLE ozone_records (
     key_id SERIAL PRIMARY KEY,
-    handover_id INTEGER REFERENCES handovers(id) ON DELETE CASCADE,
+    handover_id INTEGER REFERENCES handovers(id) ON DELETE CASCADE,  -- 可為 NULL（無交接之獨立紀錄，見 POST /api/ozone/records）
     floor VARCHAR(10) NOT NULL,              -- 樓層 (例如: 2F, 3F)
     room_numbers TEXT[] NOT NULL,            -- 房號陣列 (例如: {201, 202, 203})
     start_time TIMESTAMP NOT NULL,           -- 開始時間

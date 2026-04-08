@@ -47,6 +47,15 @@ const fixSchema = async () => {
       ADD COLUMN IF NOT EXISTS notes TEXT;
     `);
 
+        // 允許無交接之臭氧紀錄（POST /api/ozone/records）
+        console.log('正在確保 handover_id 可為 NULL...');
+        await query(`
+      ALTER TABLE ozone_records 
+      ALTER COLUMN handover_id DROP NOT NULL;
+    `).catch(() => {
+            console.log('（略過）handover_id 可能已為可空');
+        });
+
         console.log('✅ 資料庫 Schema 修復完成！');
         process.exit(0);
     } catch (error) {
