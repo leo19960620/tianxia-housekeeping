@@ -156,4 +156,26 @@ router.post('/', async (req, res) => {
     }
 });
 
+/**
+ * DELETE /api/bicycle-maintenance/:id
+ * 刪除單筆維護紀錄
+ */
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const check = await query('SELECT id FROM bicycle_maintenance WHERE id = $1', [id]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ success: false, message: '找不到此維護紀錄' });
+        }
+
+        await query('DELETE FROM bicycle_maintenance WHERE id = $1', [id]);
+
+        res.json({ success: true, message: '維護紀錄已刪除' });
+    } catch (error) {
+        console.error('刪除維護紀錄錯誤:', error);
+        res.status(500).json({ success: false, message: '伺服器錯誤' });
+    }
+});
+
 export default router;
